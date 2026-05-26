@@ -1,0 +1,82 @@
+/* ===== GLOBAL STYLES: "Graphic Design is My Passion" ===== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  /* Dark smoky/cloudy background */
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 0, 80, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(30, 0, 50, 0.5) 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-cloud-1) 0%, var(--bg-dark) 30%, var(--bg-cloud-4) 70%, var(--bg-cloud-2) 100%);
+  background-attachment: fixed;
+}
+
+/* Star-field overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(2px 2px at 15% 85%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(2px 2px at 85% 15%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 40% 30%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.3), transparent);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+a {
+  color: var(--rainbow-cyan, #00ffff);
+  text-decoration: underline wavy;
+}
+
+a:hover {
+  color: var(--rainbow-yellow);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--rainbow-purple), var(--rainbow-blue), var(--rainbow-green));
+  border-radius: 6px;
+}

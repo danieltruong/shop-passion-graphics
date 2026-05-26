@@ -1,0 +1,114 @@
+/* ===== DESIGN TOKENS: "Graphic Design is My Passion" ===== */
+:root {
+  /* Fonts - the classics */
+  --font-heading: 'Papyrus', 'Segoe Print', fantasy;
+  --font-body: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', cursive;
+  --font-accent: 'Impact', 'Arial Black', sans-serif;
+
+  /* Background - dark smoky clouds */
+  --bg-dark: #0d0d1a;
+  --bg-cloud-1: #1a1a2e;
+  --bg-cloud-2: #16213e;
+  --bg-cloud-3: #0f3460;
+  --bg-cloud-4: #1a0a2e;
+
+  /* Rainbow palette */
+  --rainbow-red: #ff0000;
+  --rainbow-orange: #ff8c00;
+  --rainbow-yellow: #ffd700;
+  --rainbow-green: #00ff00;
+  --rainbow-blue: #00bfff;
+  --rainbow-purple: #9400d3;
+  --rainbow-pink: #ff69b4;
+  --rainbow-magenta: #ff00ff;
+
+  /* UI colors */
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --card-bg: rgba(30, 30, 60, 0.85);
+  --card-border: #c0c0c0;
+  --card-border-gold: #ffd700;
+
+  /* WordArt effects */
+  --glow-cyan: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #00ffff;
+  --glow-rainbow: 0 0 10px #ff0000, 0 0 20px #ff8c00, 0 0 30px #ffd700, 0 0 40px #00ff00;
+  --glow-pink: 0 0 10px #ff69b4, 0 0 20px #ff69b4, 0 0 40px #ff1493;
+
+  /* Beveled borders */
+  --border-bevel: 4px ridge #c0c0c0;
+  --border-gold: 4px outset #ffd700;
+  --border-blue: 3px ridge #4169e1;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 3rem;
+  --space-xl: 4rem;
+}
+
+/* ===== RAINBOW GRADIENT TEXT ===== */
+.rainbow-text {
+  background: linear-gradient(
+    90deg,
+    var(--rainbow-red),
+    var(--rainbow-orange),
+    var(--rainbow-yellow),
+    var(--rainbow-green),
+    var(--rainbow-blue),
+    var(--rainbow-purple),
+    var(--rainbow-pink),
+    var(--rainbow-red)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-shift 3s linear infinite;
+}
+
+@keyframes rainbow-shift {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ===== WORDART STYLES ===== */
+.wordart-glow {
+  text-shadow: var(--glow-cyan);
+}
+
+.wordart-outline {
+  -webkit-text-stroke: 2px var(--rainbow-yellow);
+  color: transparent;
+}
+
+/* ===== SPINNING ANIMATION ===== */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: var(--glow-cyan); }
+  50% { text-shadow: var(--glow-pink); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
