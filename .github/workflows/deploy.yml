@@ -4,7 +4,7 @@ on:
   # Staging auto-deploys on every push to develop
   push:
     branches: [develop]
-  # Production deploys manually or on push to main
+  # Production deploys manually
   workflow_dispatch:
     inputs:
       environment:
@@ -20,7 +20,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write  # required for OIDC
 
 env:
   AWS_REGION: ca-central-1
@@ -50,11 +49,54 @@ jobs:
           NODE_ENV: production
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.0.1
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          # Hashed assets — long-lived cache (Vite content-hashes filenames)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "products.json"
+
+          # Entry point + data — no cache
+          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
+            --cache-control "public, max-age=0, must-revalidate"
+          [ -f dist/products.json ] && aws s3 cp dist/products.json \
+            s3://${{ secrets.S3_BUCKET_NAME }}/products.json \
+            --cache-control "public, max-age=0, must-revalidate" || true
+
+          echo "✅ S3 sync complete"
+
+      - name: Invalidate CloudFront cache
+        continue-on-error: true
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+              --paths "/index.html" "/products.json"
+            echo "✅ CloudFront invalidation queued"
+          else
+            echo "ℹ️  No CloudFront configured — skipping invalidation"
+          fi
+
+      - name: Print deployment URL
+        env:
+          CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+        run: |
+          if [ -n "$CLOUDFRONT_DOMAIN" ]; then
+            echo "🚀 Deployed to: https://$CLOUDFRONT_DOMAIN"
+          else
+            echo "🚀 Deployed to: http://${{ secrets.S3_BUCKET_NAME }}.s3-website.${{ env.AWS_REGION }}.amazonaws.com"
+          fi
 
       - name: Deploy to S3
         run: |
