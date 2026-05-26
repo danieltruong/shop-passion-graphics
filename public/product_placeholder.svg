@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f3460"/>
+    </linearGradient>
+    <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff0000"/>
+      <stop offset="17%" style="stop-color:#ff8c00"/>
+      <stop offset="33%" style="stop-color:#ffd700"/>
+      <stop offset="50%" style="stop-color:#00ff00"/>
+      <stop offset="67%" style="stop-color:#00bfff"/>
+      <stop offset="83%" style="stop-color:#9400d3"/>
+      <stop offset="100%" style="stop-color:#ff69b4"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <rect x="10" y="10" width="380" height="280" fill="none" stroke="url(#rainbow)" stroke-width="4" stroke-dasharray="10,5"/>
+  <text x="200" y="130" font-family="Comic Sans MS, cursive" font-size="20" fill="#cccccc" text-anchor="middle">🖼️</text>
+  <text x="200" y="165" font-family="Comic Sans MS, cursive" font-size="16" fill="#cccccc" text-anchor="middle">Product Image</text>
+  <text x="200" y="195" font-family="Comic Sans MS, cursive" font-size="12" fill="#888888" text-anchor="middle">coming soon...</text>
+  <text x="200" y="260" font-family="Papyrus, fantasy" font-size="10" fill="#ffd700" text-anchor="middle">✨ graphic design is my passion ✨</text>
+</svg>
