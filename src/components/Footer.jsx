@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { fadeIn, VIEWPORTS } from '../utils/animations'
 
+const visitorCount = Math.floor(Math.random() * 900000) + 100000
+
 export default function Footer() {
-  const visitorCount = Math.floor(Math.random() * 900000) + 100000
 
   return (
     <motion.footer
