@@ -75,7 +75,6 @@ jobs:
           echo "✅ S3 sync complete"
 
       - name: Invalidate CloudFront cache
-        continue-on-error: true
         env:
           CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
@@ -85,7 +84,7 @@ jobs:
               --paths "/index.html" "/products.json"
             echo "✅ CloudFront invalidation queued"
           else
-            echo "ℹ️  No CloudFront configured — skipping invalidation"
+            echo "ℹ️  No CloudFront configured — skipping"
           fi
 
       - name: Print deployment URL
@@ -97,33 +96,3 @@ jobs:
           else
             echo "🚀 Deployed to: http://${{ secrets.S3_BUCKET_NAME }}.s3-website.${{ env.AWS_REGION }}.amazonaws.com"
           fi
-
-      - name: Deploy to S3
-        run: |
-          # Hashed assets — long-lived cache (Vite content-hashes filenames)
-          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
-            --delete \
-            --cache-control "public, max-age=31536000, immutable" \
-            --exclude "index.html" \
-            --exclude "products.json" \
-            --exclude "*.svg" \
-            --exclude "*.ico"
-
-          # Entry point + data — no cache (must revalidate on every load)
-          for file in dist/index.html dist/products.json; do
-            [ -f "$file" ] && aws s3 cp "$file" "s3://${{ secrets.S3_BUCKET_NAME }}/$(basename $file)" \
-              --cache-control "public, max-age=0, must-revalidate"
-          done
-
-          echo "✅ S3 sync complete"
-
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/index.html" "/products.json"
-          echo "✅ CloudFront invalidation queued"
-
-      - name: Print deployment URL
-        run: |
-          echo "🚀 Deployed to: https://${{ secrets.CLOUDFRONT_DOMAIN }}"
