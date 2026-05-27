@@ -1,7 +1,15 @@
 import { motion } from 'framer-motion'
 import { fadeInDown, VIEWPORTS } from '../utils/animations'
+import CartIcon from './CartIcon'
 
-export default function Header() {
+/**
+ * Header — site header with title, subtitle, decorations, and cart icon.
+ *
+ * Props:
+ *   cart       [{ product, quantity }]  — passed to CartIcon for badge count
+ *   onCartOpen () => void               — opens CartDrawer
+ */
+export default function Header({ cart, onCartOpen }) {
   return (
     <motion.header
       className="site-header"
@@ -36,11 +44,7 @@ export default function Header() {
         ⭐ ✨ ⭐
       </motion.div>
 
-      <ViewportTrigger />
+      <CartIcon cart={cart} onClick={onCartOpen} />
     </motion.header>
   )
-}
-
-function ViewportTrigger() {
-  return null
 }

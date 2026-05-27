@@ -43,18 +43,52 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-
+      # AWS credentials must come before SAM deploy so the Lambda and API
+      # Gateway stack are created/updated before the Vite build runs.
+      # The API Gateway URL is captured from the stack output and injected
+      # into the bundle as VITE_CHECKOUT_API_URL — no manual secret needed.
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.0.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      # SAM is pre-installed on ubuntu-latest runners.
+      # sam build: installs Lambda deps + packages source into .aws-sam/build/
+      # sam deploy: creates or updates the CloudFormation stack (idempotent).
+      # --resolve-s3 auto-creates a managed S3 bucket for SAM artifacts.
+      - name: Deploy Checkout API (SAM)
+        id: sam
+        run: |
+          ENV=${{ inputs.environment || 'staging' }}
+          sam build --template-file infra/template.yaml
+          sam deploy \
+            --config-file infra/samconfig.toml \
+            --config-env "${ENV}" \
+            --parameter-overrides \
+              "Stage=${ENV}" \
+              "StripeSecretKey=${{ secrets.STRIPE_SECRET_KEY }}" \
+              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN }}" \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+          CHECKOUT_URL=$(aws cloudformation describe-stacks \
+            --stack-name shop-passion-${ENV} \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text \
+            --region ${{ env.AWS_REGION }})
+          echo "checkout_url=${CHECKOUT_URL}" >> "$GITHUB_OUTPUT"
+          echo "✅ SAM deploy complete — ${CHECKOUT_URL}"
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          # Derived from the SAM stack output above — not a manually managed secret.
+          # Points to the API Gateway endpoint for this environment's checkout Lambda.
+          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url }}
 
       - name: Deploy to S3
         run: |

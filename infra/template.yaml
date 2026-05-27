@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Shop Passion Graphics — Checkout API (Lambda + HTTP API Gateway)
+
+# ─────────────────────────────────────────────
+# Parameters — supplied at deploy time via
+#   sam deploy --parameter-overrides ...
+# Secrets (NoEcho) are never logged or stored
+# in CloudFormation outputs.
+# ─────────────────────────────────────────────
+Parameters:
+  Stage:
+    Type: String
+    AllowedValues: [staging, prod]
+    Default: staging
+    Description: Deployment stage — matches GitHub environment name.
+
+  StripeSecretKey:
+    Type: String
+    NoEcho: true
+    Description: >
+      Stripe secret key for server-side use only.
+      Set via GitHub Actions secret STRIPE_SECRET_KEY.
+      NEVER appears in CloudFormation outputs or logs.
+
+  AllowedOrigin:
+    Type: String
+    Description: >
+      Allowed CORS origin for this environment.
+      Example: https://shop.passion.graphics (prod)
+               https://staging.shop.passion.graphics (staging)
+      Set via GitHub Actions secret ALLOWED_ORIGIN.
+
+# ─────────────────────────────────────────────
+# Globals — applied to all Lambda functions
+# arm64 (Graviton2) is ~20% cheaper and
+# equally fast for I/O-bound Node.js workloads.
+# ─────────────────────────────────────────────
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 10
+    MemorySize: 128
+    Architectures: [arm64]
+
+# ─────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────
+Resources:
+
+  # HTTP API (API Gateway v2) — cheaper than REST API,
+  # built-in CORS support, $default stage = no path prefix.
+  CheckoutApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - Content-Type
+        AllowMethods:
+          - POST
+          - OPTIONS
+
+  # Lambda function — creates Stripe Checkout Sessions.
+  # CodeUri is relative to this template file's directory (infra/).
+  # ../lambda/create-checkout/ → resolves to lambda/create-checkout/ at repo root.
+  CheckoutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambda/create-checkout/
+      Handler: index.handler
+      Description: Creates Stripe Checkout Sessions from cart data.
+      Tags:
+        Project: shop-passion-graphics
+        Stage: !Ref Stage
+      Environment:
+        Variables:
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+      Events:
+        CreateCheckout:
+          Type: HttpApi
+          Properties:
+            Path: /create-checkout
+            Method: POST
+            ApiId: !Ref CheckoutApi
+
+# ─────────────────────────────────────────────
+# Outputs — the API URL is captured by deploy.yml
+# and injected into the Vite build as VITE_CHECKOUT_API_URL.
+# This eliminates the need to manage it as a manual secret.
+# ─────────────────────────────────────────────
+Outputs:
+  ApiUrl:
+    Description: >
+      Checkout API endpoint URL.
+      Baked into the Vite bundle at build time as VITE_CHECKOUT_API_URL
+      by the GitHub Actions deploy workflow.
+    Value: !Sub "https://${CheckoutApi}.execute-api.${AWS::Region}.amazonaws.com/create-checkout"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"

@@ -19,14 +19,6 @@ export const DELAYS = {
   long: 0.8
 }
 
-// ===== SPRING CONFIGURATIONS =====
-export const SPRINGS = {
-  default: { type: "spring", stiffness: 100, damping: 10 },
-  bouncy: { type: "spring", stiffness: 300, damping: 20 },
-  wobbly: { type: "spring", stiffness: 200, damping: 8 },
-  gentle: { type: "spring", stiffness: 50, damping: 15 }
-}
-
 // ===== VIEWPORT CONFIGURATIONS =====
 export const VIEWPORTS = {
   default: { once: true },
@@ -62,47 +54,11 @@ export const fadeInDown = {
   }
 }
 
-export const slideInLeft = {
-  hidden: { x: -60, opacity: 0 },
-  visible: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: DURATIONS.normal }
-  }
-}
-
-export const slideInRight = {
-  hidden: { x: 60, opacity: 0 },
-  visible: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: DURATIONS.normal }
-  }
-}
-
 export const scaleIn = {
   hidden: { scale: 0 },
   visible: {
     scale: 1,
-    transition: { ...SPRINGS.bouncy, duration: DURATIONS.normal }
-  }
-}
-
-export const scaleInRotate = {
-  hidden: { scale: 0, rotate: -180 },
-  visible: {
-    scale: 1,
-    rotate: 0,
-    transition: { ...SPRINGS.wobbly, duration: DURATIONS.slow }
-  }
-}
-
-export const bounceIn = {
-  hidden: { scale: 0, y: -50 },
-  visible: {
-    scale: 1,
-    y: 0,
-    transition: { ...SPRINGS.bouncy }
+    transition: { type: 'spring', stiffness: 300, damping: 20, duration: DURATIONS.normal }
   }
 }
 
@@ -117,22 +73,6 @@ export const staggerContainer = (stagger = 0.15, delayChildren = 0.1) => ({
     }
   }
 })
-
-// ===== HOVER ANIMATIONS =====
-export const hoverScale = {
-  scale: 1.05,
-  transition: { duration: DURATIONS.fast }
-}
-
-export const hoverWobble = {
-  rotate: [0, -3, 3, -3, 0],
-  transition: { duration: 0.4 }
-}
-
-export const tapScale = {
-  scale: 0.95,
-  transition: { duration: DURATIONS.instant }
-}
 
 // ===== UTILITY FUNCTIONS =====
 

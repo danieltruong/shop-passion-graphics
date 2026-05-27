@@ -38,6 +38,9 @@ jobs:
         run: npm run build
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          # VITE_CHECKOUT_API_URL is derived from the SAM stack at deploy time.
+          # Intentionally omitted here — CartDrawer falls back to the Netlify local URL
+          # and the build succeeds. The real URL is injected only by deploy.yml.
 
       - name: Verify build output
         run: |

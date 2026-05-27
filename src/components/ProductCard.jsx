@@ -1,7 +1,17 @@
 import { motion } from 'framer-motion'
 import { fadeInUp, DURATIONS } from '../utils/animations'
 
-export default function ProductCard({ product }) {
+/**
+ * ProductCard — displays a single product with image, price, and cart button.
+ *
+ * Products with a stripePriceId get an "Add to Cart" button.
+ * Products without one (no price configured in Stripe) show "Coming Soon".
+ *
+ * Props:
+ *   product     ProductObject  — from products.json
+ *   onAddToCart (product) => void
+ */
+export default function ProductCard({ product, onAddToCart }) {
   return (
     <motion.div
       className="product-card"
@@ -26,15 +36,15 @@ export default function ProductCard({ product }) {
         <p className="product-description">{product.description}</p>
 
         <div className="product-footer">
-          {product.paymentLink ? (
-            <motion.a
-              href={product.paymentLink}
+          {product.stripePriceId ? (
+            <motion.button
               className="btn-buy"
+              onClick={() => onAddToCart(product)}
               whileHover={{ scale: 1.05, transition: { duration: DURATIONS.fast } }}
               whileTap={{ scale: 0.95, transition: { duration: DURATIONS.instant } }}
             >
-              🛒 Buy Now 🛒
-            </motion.a>
+              🛒 Add to Cart
+            </motion.button>
           ) : (
             <button className="btn-buy disabled" disabled>
               Coming Soon

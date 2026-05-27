@@ -1,0 +1,9 @@
+{
+  "name": "create-checkout",
+  "version": "1.0.0",
+  "description": "Stripe Checkout Session creator — AWS Lambda function",
+  "type": "module",
+  "dependencies": {
+    "stripe": "^17.7.0"
+  }
+}

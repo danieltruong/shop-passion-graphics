@@ -2,7 +2,14 @@ import { motion } from 'framer-motion'
 import ProductCard from './ProductCard'
 import { scaleIn, staggerContainer, VIEWPORTS } from '../utils/animations'
 
-export default function ProductSection({ products }) {
+/**
+ * ProductSection — grid of ProductCard components.
+ *
+ * Props:
+ *   products    ProductObject[]       — from products.json
+ *   onAddToCart (product) => void     — forwarded to each ProductCard
+ */
+export default function ProductSection({ products, onAddToCart }) {
   if (!products || products.length === 0) {
     return (
       <section className="product-section" style={{ textAlign: 'center' }}>
@@ -33,7 +40,7 @@ export default function ProductSection({ products }) {
         variants={staggerContainer(0.15)}
       >
         {products.map((product) => (
-          <ProductCard key={product.productId} product={product} />
+          <ProductCard key={product.productId} product={product} onAddToCart={onAddToCart} />
         ))}
       </motion.div>
     </section>

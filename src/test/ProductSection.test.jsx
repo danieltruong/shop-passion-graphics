@@ -9,7 +9,7 @@ const mockProducts = [
     price: 999,
     currency: 'USD',
     imageUrl: '/product_placeholder.svg',
-    paymentLink: 'https://buy.stripe.com/test_abc',
+    stripePriceId: 'price_test_abc',
   },
   {
     productId: 'prod_test2',
@@ -18,7 +18,7 @@ const mockProducts = [
     price: 2499,
     currency: 'USD',
     imageUrl: '/product_placeholder.svg',
-    paymentLink: null,
+    stripePriceId: null,
   },
 ]
 
@@ -44,15 +44,14 @@ describe('ProductSection', () => {
     expect(screen.getByText('Galaxy Print')).toBeInTheDocument()
   })
 
-  it('shows Buy Now for products with a payment link', () => {
-    render(<ProductSection products={mockProducts} />)
-    const buyButtons = screen.getAllByRole('link', { name: /buy now/i })
-    expect(buyButtons).toHaveLength(1)
-    expect(buyButtons[0]).toHaveAttribute('href', 'https://buy.stripe.com/test_abc')
+  it('shows Add to Cart for products with a Stripe price', () => {
+    render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
+    const addButtons = screen.getAllByRole('button', { name: /add to cart/i })
+    expect(addButtons).toHaveLength(1)
   })
 
-  it('shows Coming Soon for products without a payment link', () => {
-    render(<ProductSection products={mockProducts} />)
+  it('shows Coming Soon for products without a Stripe price', () => {
+    render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
     expect(screen.getByRole('button', { name: /coming soon/i })).toBeDisabled()
   })
 })
