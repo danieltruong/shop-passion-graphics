@@ -1,5 +1,30 @@
 {
-  "products": [],
-  "generated": "2026-01-01T00:00:00.000Z",
-  "source": "placeholder"
+  "products": [
+    {
+      "productId": "prod_UahrSUIPvwuJ6i",
+      "name": "Frog",
+      "description": "I MUST CONSUME",
+      "price": 10000,
+      "currency": "CAD",
+      "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfY0p4aTZKak5PWUFDODY3UEdaejJKQTlF00iKIKCCS0",
+      "active": true,
+      "stripeProductId": "prod_UahrSUIPvwuJ6i",
+      "stripePriceId": "price_1TbWRQ5FIOXpGKH62CpWdj6X",
+      "paymentLink": null
+    },
+    {
+      "productId": "prod_UagVOmlTQPME17",
+      "name": "Sobble Cart",
+      "description": "RELEASE ME FROM MY PRISON!",
+      "price": 3499,
+      "currency": "CAD",
+      "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfUmkyZ0JpRmlMcG1OcnpMR2piNjVtdlhl00swQNhZ1i",
+      "active": true,
+      "stripeProductId": "prod_UagVOmlTQPME17",
+      "stripePriceId": "price_1TbV8k5FIOXpGKH60y2koJhi",
+      "paymentLink": "https://buy.stripe.com/test_8x2fZabpLdNq1Mdak193y00"
+    }
+  ],
+  "generated": "2026-05-27T06:15:02.730Z",
+  "source": "Stripe API"
 }

@@ -1,0 +1,31 @@
+# AWS SAM deployment configuration.
+# Used by: sam deploy --config-file infra/samconfig.toml --config-env staging|prod
+#
+# For a first-time bootstrap of a new environment, run interactively:
+#   sam deploy --guided --config-env staging
+#
+# In CI (deploy.yml), GitHub Actions passes --parameter-overrides at deploy time
+# so secrets never touch this file.
+#
+# resolve_s3 = true → SAM auto-creates a managed S3 bucket for deployment
+# artifacts. This is separate from the website S3 bucket.
+
+version = 0.1
+
+# ── Staging ──────────────────────────────────────────────────────────────────
+[staging.deploy.parameters]
+stack_name              = "shop-passion-staging"
+region                  = "ca-central-1"
+capabilities            = "CAPABILITY_IAM"
+resolve_s3              = true
+confirm_changeset       = false
+fail_on_empty_changeset = false
+
+# ── Production ───────────────────────────────────────────────────────────────
+[prod.deploy.parameters]
+stack_name              = "shop-passion-prod"
+region                  = "ca-central-1"
+capabilities            = "CAPABILITY_IAM"
+resolve_s3              = true
+confirm_changeset       = false
+fail_on_empty_changeset = false

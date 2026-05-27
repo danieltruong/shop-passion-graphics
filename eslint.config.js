@@ -6,10 +6,17 @@ import react from 'eslint-plugin-react'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', '.netlify', '.aws-sam', 'lambda']),
   // Node.js scripts (generate-products, etc.)
   {
     files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
+  // Netlify serverless functions (Node.js ESM)
+  {
+    files: ['netlify/functions/**/*.js'],
     languageOptions: {
       globals: { ...globals.node },
     },
@@ -19,6 +26,7 @@ export default defineConfig([
     files: ['src/test/**/*.{js,jsx}'],
     languageOptions: {
       globals: {
+        ...globals.node,
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',

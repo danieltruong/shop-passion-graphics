@@ -1,0 +1,24 @@
+# Netlify configuration for shop.passion.graphics
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Vite build output
+  command   = "npm run build"
+  publish   = "dist"
+  # Serverless functions directory
+  functions = "netlify/functions"
+
+[dev]
+  # Underlying dev server (Vite)
+  command    = "vite"
+  # Port Vite listens on (internal)
+  targetPort = 5173
+  # Port netlify dev exposes (access the site here locally)
+  port       = 8888
+  autoLaunch = false
+
+# Serve the SPA for all routes — lets React Router handle /success, /cancel, etc.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
