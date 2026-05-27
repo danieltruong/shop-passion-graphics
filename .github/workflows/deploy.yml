@@ -60,6 +60,7 @@ jobs:
       # --resolve-s3 auto-creates a managed S3 bucket for SAM artifacts.
       - name: Deploy Checkout API (SAM)
         id: sam
+        continue-on-error: true  # SAM needs extra IAM perms; products+site still deploy if this fails
         run: |
           ENV=${{ inputs.environment || 'staging' }}
           sam build --template-file infra/template.yaml
@@ -86,9 +87,9 @@ jobs:
         env:
           NODE_ENV: production
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          # Derived from the SAM stack output above — not a manually managed secret.
-          # Points to the API Gateway endpoint for this environment's checkout Lambda.
-          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url }}
+          # SAM stack output takes priority; falls back to a manually set secret
+          # while IAM permissions are being provisioned for the Lambda deploy.
+          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url || secrets.VITE_CHECKOUT_API_URL }}
 
       - name: Deploy to S3
         run: |
