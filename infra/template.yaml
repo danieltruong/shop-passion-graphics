@@ -25,6 +25,7 @@ Parameters:
 
   AllowedOrigin:
     Type: String
+    Default: '*'
     Description: >
       Allowed CORS origin for this environment.
       Example: https://shop.passion.graphics (prod)

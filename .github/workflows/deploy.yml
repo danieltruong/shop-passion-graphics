@@ -69,7 +69,7 @@ jobs:
             --parameter-overrides \
               "Stage=${ENV}" \
               "StripeSecretKey=${{ secrets.STRIPE_SECRET_KEY }}" \
-              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN }}" \
+              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN || '*' }}" \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
