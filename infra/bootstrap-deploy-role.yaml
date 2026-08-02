@@ -166,6 +166,8 @@ Resources:
                   - lambda:DeleteFunction
                   - lambda:GetFunction
                   - lambda:GetFunctionConfiguration
+                  - lambda:GetFunctionCodeSigningConfig
+                  - lambda:GetFunctionEventInvokeConfig
                   - lambda:UpdateFunctionCode
                   - lambda:UpdateFunctionConfiguration
                   - lambda:AddPermission
@@ -206,6 +208,8 @@ Resources:
                     'iam:PassedToService': lambda.amazonaws.com
 
               # ── API Gateway v2 (HTTP API) ──
+              # TagResource/UntagResource are separate IAM actions from the HTTP verbs — the
+              # verbs alone create the API and then fail on the default stage, which SAM tags.
               - Effect: Allow
                 Action:
                   - apigateway:GET
@@ -213,6 +217,8 @@ Resources:
                   - apigateway:PUT
                   - apigateway:PATCH
                   - apigateway:DELETE
+                  - apigateway:TagResource
+                  - apigateway:UntagResource
                 Resource:
                   - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis'
                   - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis/*'
