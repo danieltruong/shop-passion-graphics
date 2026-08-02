@@ -3,39 +3,56 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "yarn@4.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "lambda/create-checkout"
+  ],
+  "//resolutions": "netlify-cli 27 installs @opentelemetry/api 1.9.1, but its own @netlify/opentelemetry-utils pins the peer to ~1.8.0 — netlify's halves disagree, and yarn warns on every install. 1.8.0 satisfies both declared ranges (netlify-cli asks for ^1.8.0), so this narrows rather than overrides. Dev-only: no Netlify code ships to production. Drop it once netlify-cli aligns the two.",
+  "resolutions": {
+    "@opentelemetry/api": "1.8.0"
+  },
   "scripts": {
-    "predev": "node scripts/generate-products.js",
     "dev": "netlify dev",
     "build": "vite build",
-    "prebuild": "npm run generate:products",
     "generate:products": "node scripts/generate-products.js",
+    "sync:catalog": "node scripts/sync-catalog.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "framer-motion": "^12.35.2",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "stripe": "^17.7.0"
+    "framer-motion": "^12.43.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "stripe": "^22.4.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.62.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^9.39.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "jsdom": "^29.1.1",
-    "netlify-cli": "^17.0.0",
-    "vite": "^7.3.1",
-    "vitest": "^4.1.7"
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.8.0",
+    "jsdom": "^30.0.1",
+    "netlify-cli": "^27.0.1",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
   }
 }

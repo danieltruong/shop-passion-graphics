@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Frontend + tooling + the Lambda.
+  #
+  # `npm` is the correct ecosystem name for yarn too — it is chosen by manifest type, not by
+  # package manager, and it reads yarn.lock. lambda/create-checkout is a yarn workspace covered
+  # by the root lockfile, so it no longer needs a separate entry; its dependencies still get
+  # their own PRs. (That function is the production checkout handler — its Stripe version once
+  # drifted five majors behind root, which is what the separate entry originally guarded.)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  # Actions are pinned to full commit SHAs, which is correct but means they never update on
+  # their own — this is what keeps those pins from rotting.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

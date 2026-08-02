@@ -25,43 +25,87 @@ env:
   AWS_REGION: ca-central-1
 
 jobs:
+  # Deploy is gated on CI. Previously deploy.yml triggered independently on push to develop
+  # with no dependency, so a commit that failed lint or tests deployed anyway, in parallel.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
     name: Deploy → ${{ inputs.environment || 'staging' }}
+    needs: ci
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'staging' }}
+    permissions:
+      contents: read
+      # Required for OIDC. Commit 55fe4e6 introduced OIDC, f23e220 replaced it with
+      # long-lived access keys, and those then needed manual rotation in 4552175.
+      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      # Must precede setup-node — `cache: 'yarn'` invokes yarn to find the cache folder.
+      # Yarn's version comes from `packageManager` in package.json.
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Setup Node.js 24
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'yarn'
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
-      # AWS credentials must come before SAM deploy so the Lambda and API
-      # Gateway stack are created/updated before the Vite build runs.
-      # The API Gateway URL is captured from the stack output and injected
-      # into the bundle as VITE_CHECKOUT_API_URL — no manual secret needed.
-      - name: Configure AWS credentials
+      # Fail early and clearly rather than deploying a wildcard-CORS API. AllowedOrigin has no
+      # default in the SAM template, so an unset secret would fail later and less legibly.
+      - name: Verify required secrets
+        env:
+          ALLOWED_ORIGIN: ${{ secrets.ALLOWED_ORIGIN }}
+          STRIPE_SECRET_ARN: ${{ secrets.STRIPE_SECRET_ARN }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          missing=0
+          for var in ALLOWED_ORIGIN STRIPE_SECRET_ARN S3_BUCKET_NAME; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Required secret $var is not set"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "✅ Required secrets present"
+
+      # AWS credentials must come before SAM deploy so the Lambda and API Gateway stack are
+      # created/updated before the Vite build runs. The API Gateway URL is captured from the
+      # stack output and injected into the bundle as VITE_CHECKOUT_API_URL.
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.0.1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # The checkout function validates every submitted price ID against this catalog, so it
+      # must be inside the function bundle before `sam build` packages CodeUri.
+      - name: Sync catalog into Lambda bundle
+        run: yarn sync:catalog
+
       # SAM is pre-installed on ubuntu-latest runners.
-      # sam build: installs Lambda deps + packages source into .aws-sam/build/
-      # sam deploy: creates or updates the CloudFormation stack (idempotent).
-      # --resolve-s3 auto-creates a managed S3 bucket for SAM artifacts.
+      #
+      # `sam build` uses the makefile builder (Metadata: BuildMethod: makefile in the template)
+      # rather than SAM's native Node.js builder, which would run `npm install`. The Makefile
+      # copies the node_modules that `yarn install --immutable` above already produced in the
+      # workspace — so that install step is a build dependency of this one, not just a test one.
+      #
+      # No `continue-on-error` here. It previously made this job report green even when the
+      # entire checkout API failed to deploy — and because `run:` executes under `bash -e`, a
+      # failure aborted before checkout_url was set, so the build silently fell back to an
+      # empty VITE_CHECKOUT_API_URL and shipped a broken checkout button behind a green pipeline.
       - name: Deploy Checkout API (SAM)
         id: sam
-        continue-on-error: true  # SAM needs extra IAM perms; products+site still deploy if this fails
         run: |
+          set -euo pipefail
           ENV=${{ inputs.environment || 'staging' }}
           sam build --template-file infra/template.yaml
           sam deploy \
@@ -69,8 +113,8 @@ jobs:
             --config-env "${ENV}" \
             --parameter-overrides \
               "Stage=${ENV}" \
-              "StripeSecretKey=${{ secrets.STRIPE_SECRET_KEY }}" \
-              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN || '*' }}" \
+              "StripeSecretArn=${{ secrets.STRIPE_SECRET_ARN }}" \
+              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN }}" \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
@@ -79,20 +123,29 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
             --output text \
             --region ${{ env.AWS_REGION }})
+
+          # `--output text` prints the literal string "None" when the output is absent, which
+          # would otherwise be baked into the bundle as VITE_CHECKOUT_API_URL="None".
+          if [ -z "$CHECKOUT_URL" ] || [ "$CHECKOUT_URL" = "None" ]; then
+            echo "❌ Stack produced no ApiUrl output — refusing to build against a missing API"
+            exit 1
+          fi
+
           echo "checkout_url=${CHECKOUT_URL}" >> "$GITHUB_OUTPUT"
           echo "✅ SAM deploy complete — ${CHECKOUT_URL}"
 
       - name: Build
-        run: npm run build
+        run: yarn build
         env:
           NODE_ENV: production
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          # SAM stack output takes priority; falls back to a manually set secret
-          # while IAM permissions are being provisioned for the Lambda deploy.
-          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url || secrets.VITE_CHECKOUT_API_URL }}
+          # Taken straight from the stack output. The previous `|| secrets.…` fallback could
+          # resolve to an empty string, which CartDrawer's `??` did not catch.
+          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url }}
 
       - name: Deploy to S3
         run: |
+          set -euo pipefail
+
           # Hashed assets — long-lived cache (Vite content-hashes filenames)
           aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
             --delete \
@@ -103,9 +156,12 @@ jobs:
           # Entry point + data — no cache
           aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
             --cache-control "public, max-age=0, must-revalidate"
-          [ -f dist/products.json ] && aws s3 cp dist/products.json \
+
+          # No `|| true`: that swallowed a *failed* upload as well as a missing file, so the
+          # product catalog could silently fail to publish.
+          aws s3 cp dist/products.json \
             s3://${{ secrets.S3_BUCKET_NAME }}/products.json \
-            --cache-control "public, max-age=0, must-revalidate" || true
+            --cache-control "public, max-age=0, must-revalidate"
 
           echo "✅ S3 sync complete"
 

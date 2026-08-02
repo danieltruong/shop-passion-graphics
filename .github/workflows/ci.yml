@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Called by deploy.yml so a deploy cannot start until CI has passed.
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -22,30 +24,67 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      # Yarn 4 is provisioned by corepack from the `packageManager` field in package.json.
+      # This has to run *before* setup-node: `cache: 'yarn'` shells out to yarn to locate the
+      # cache folder, so yarn must already resolve on PATH at that point.
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Setup Node.js 24
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'yarn'
 
+      # --immutable is the `npm ci` equivalent: it fails rather than silently rewriting
+      # yarn.lock, so a dependency change that was never committed cannot pass CI.
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Lint
-        run: npm run lint
+        run: yarn lint
 
+      # The job has always been called "Lint, Test & Build", but this step did not exist —
+      # the test suite had never run in CI.
+      - name: Test
+        run: yarn test:run
+
+      # No STRIPE_SECRET_KEY here. The build no longer regenerates the catalog (that is an
+      # explicit `yarn generate:products` step), so the key does not need to be exposed to
+      # every build — including pull_request builds, where a workflow or build-script change
+      # could otherwise have exfiltrated it.
       - name: Build
-        run: npm run build
+        run: yarn build
         env:
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          # VITE_CHECKOUT_API_URL is derived from the SAM stack at deploy time.
-          # Intentionally omitted here — CartDrawer falls back to the Netlify local URL
-          # and the build succeeds. The real URL is injected only by deploy.yml.
+          # Intentionally empty: CartDrawer falls back to the local Netlify function URL and
+          # the build succeeds. The real URL is injected only by deploy.yml.
+          VITE_CHECKOUT_API_URL: ''
 
       - name: Verify build output
         run: |
-          test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
+          test -f dist/index.html   || (echo "❌ dist/index.html missing" && exit 1)
+          test -f dist/products.json || (echo "❌ dist/products.json missing" && exit 1)
           echo "✅ Build OK — $(du -sh dist/ | cut -f1)"
+
+      # Browser tests. These cover what jsdom structurally cannot — focus management,
+      # computed styles, and prefers-reduced-motion — which is where the accessibility
+      # regressions in docs/AUDIT.md lived. Chromium only; the suite reuses the dist/
+      # built above via `vite preview`.
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: yarn test:e2e
+        env:
+          VITE_CHECKOUT_API_URL: ''
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 7
 
       - name: Upload build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
