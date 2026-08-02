@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  One-time bootstrap for shop-passion-graphics CI deploys — GitHub OIDC provider and the
+  least-privilege role that deploy.yml assumes.
+
+  This is NOT deployed by deploy.yml; it is what makes deploy.yml able to run. Deploy it once,
+  by hand, with credentials that can create IAM roles:
+
+    aws cloudformation deploy \
+      --template-file infra/bootstrap-deploy-role.yaml \
+      --stack-name shop-passion-deploy-role \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --region ca-central-1
+
+  Then put the RoleArn output into the repo's AWS_ROLE_ARN secret.
+
+  Why OIDC and not access keys: deploy.yml already calls configure-aws-credentials with
+  role-to-assume, and short-lived tokens cannot be exfiltrated and reused the way the
+  long-lived AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY pair in the repo secrets can. Those keys
+  had to be rotated by hand once already (commit 4552175).
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Default: danieltruong
+
+  GitHubRepo:
+    Type: String
+    Default: shop-passion-graphics
+
+  SiteBucketName:
+    Type: String
+    Default: shop-passion-graphics-staging
+    Description: The website bucket deploy.yml syncs dist/ into (the S3_BUCKET_NAME secret).
+
+  CreateOidcProvider:
+    Type: String
+    AllowedValues: ['Yes', 'No']
+    Default: 'Yes'
+    Description: >
+      Set to No if this account already has an IAM OIDC provider for
+      token.actions.githubusercontent.com — there can only be one per account, and a second
+      CreateOpenIDConnectProvider fails with EntityAlreadyExists.
+
+Conditions:
+  ShouldCreateOidcProvider: !Equals [!Ref CreateOidcProvider, 'Yes']
+
+Resources:
+
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: ShouldCreateOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      # IAM stopped verifying this thumbprint for GitHub's provider in 2023 (it validates
+      # against its own trusted root CA store instead), but the property is still accepted and
+      # keeps older tooling happy.
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shop-passion-deploy
+      Description: Assumed by GitHub Actions (deploy.yml) to deploy the checkout API and site.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': sts.amazonaws.com
+              # Scoped to the two deployment environments, not `repo:owner/repo:*`. The
+              # wildcard form would let ANY workflow in the repo — including one added in a
+              # branch by a fork-then-push — assume this role. deploy.yml's job sets
+              # `environment:`, so the sub claim carries it.
+              StringLike:
+                'token.actions.githubusercontent.com:sub':
+                  - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:staging'
+                  - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:prod'
+      Policies:
+        - PolicyName: sam-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+
+              # ── CloudFormation: the two app stacks plus SAM's own managed-bucket stack ──
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:ListStackResources
+                  - cloudformation:GetTemplate
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DeleteChangeSet
+                Resource:
+                  - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/shop-passion-staging/*'
+                  - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/shop-passion-prod/*'
+                  # samconfig.toml sets resolve_s3 = true, which provisions the artifact bucket
+                  # through this stack on first deploy.
+                  - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/aws-sam-cli-managed-default/*'
+
+              # The SAM transform is itself a CloudFormation resource that must be readable.
+              - Effect: Allow
+                Action: cloudformation:CreateChangeSet
+                Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31'
+
+              # Not resource-scopable: these act on a template body, not a stack.
+              - Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:GetTemplateSummary
+                Resource: '*'
+
+              # ── S3: SAM's artifact bucket ──
+              - Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:GetBucketLocation
+                  - s3:GetBucketPolicy
+                  - s3:PutBucketPolicy
+                  - s3:GetBucketVersioning
+                  - s3:PutBucketVersioning
+                  - s3:PutBucketTagging
+                  - s3:PutBucketPublicAccessBlock
+                  - s3:PutEncryptionConfiguration
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - arn:aws:s3:::aws-sam-cli-managed-default*
+                  - arn:aws:s3:::aws-sam-cli-managed-default*/*
+
+              # ── S3: the website bucket deploy.yml syncs into ──
+              # `aws s3 sync --delete` needs ListBucket and DeleteObject, not just PutObject.
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: !Sub 'arn:aws:s3:::${SiteBucketName}'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub 'arn:aws:s3:::${SiteBucketName}/*'
+
+              # ── Lambda ──
+              - Effect: Allow
+                Action:
+                  - lambda:CreateFunction
+                  - lambda:DeleteFunction
+                  - lambda:GetFunction
+                  - lambda:GetFunctionConfiguration
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                  - lambda:GetPolicy
+                  - lambda:ListTags
+                  - lambda:TagResource
+                  - lambda:UntagResource
+                  - lambda:PublishVersion
+                  - lambda:ListVersionsByFunction
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:shop-passion-*'
+
+              # ── IAM: the function's execution role, which SAM creates ──
+              # This is why the deploy passes CAPABILITY_IAM. Scoped to shop-passion-* so this
+              # role cannot mint arbitrary privileged roles.
+              - Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PutRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:UpdateAssumeRolePolicy
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-*'
+
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-*'
+                Condition:
+                  StringEquals:
+                    'iam:PassedToService': lambda.amazonaws.com
+
+              # ── API Gateway v2 (HTTP API) ──
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                  - apigateway:POST
+                  - apigateway:PUT
+                  - apigateway:PATCH
+                  - apigateway:DELETE
+                Resource:
+                  - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis'
+                  - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis/*'
+                  - !Sub 'arn:aws:apigateway:${AWS::Region}::/tags/*'
+
+              # ── CloudWatch Logs: the explicit, retention-bounded log group ──
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:DeleteLogGroup
+                  - logs:DescribeLogGroups
+                  - logs:PutRetentionPolicy
+                  - logs:TagResource
+                  - logs:ListTagsForResource
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/shop-passion-*'
+
+              # ── CloudFront invalidation (last step of deploy.yml) ──
+              - Effect: Allow
+                Action: cloudfront:CreateInvalidation
+                Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/*'
+
+Outputs:
+  RoleArn:
+    Description: Set this as the AWS_ROLE_ARN secret in GitHub.
+    Value: !GetAtt DeployRole.Arn

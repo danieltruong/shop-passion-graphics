@@ -15,6 +15,10 @@ Parameters:
 
   StripeSecretArn:
     Type: String
+    # Must be a full ARN, not a bare parameter name: it is used verbatim as an IAM policy
+    # Resource below, and a bare name there is not a valid ARN. Fail at the parameter rather
+    # than mid-deploy with a CloudFormation MalformedPolicyDocument.
+    AllowedPattern: '^arn:aws:(ssm|secretsmanager):[a-z0-9-]+:\d{12}:.+'
     Description: >
       ARN of the SSM SecureString parameter (or Secrets Manager secret) holding the Stripe
       secret key. The key itself is NEVER passed to CloudFormation — it is fetched by the
@@ -97,9 +101,18 @@ Resources:
           STRIPE_SECRET_ARN: !Ref StripeSecretArn
           ALLOWED_ORIGIN: !Ref AllowedOrigin
       Policies:
-        - SSMParameterWithSlashPrefixReadPolicy:
-            ParameterName: !Ref StripeSecretArn
+        # A raw statement, not SAM's SSMParameterWithSlashPrefixReadPolicy. That template takes a
+        # parameter *name* and builds the ARN itself by concatenation —
+        #   Fn::Sub "arn:${Partition}:ssm:${Region}:${AccountId}:parameter${ParameterName}"
+        # — so handing it the ARN this stack already has produced a doubled, malformed resource
+        # ("…:parameterarn:aws:ssm:…") that matches nothing. The deploy still succeeded; the
+        # function then failed at cold start with AccessDenied on GetParameter, i.e. every
+        # checkout returned 500. It also granted ssm:DescribeParameters on '*', which the
+        # handler never calls.
         - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Ref StripeSecretArn
             - Effect: Allow
               Action: kms:Decrypt
               Resource: '*'
