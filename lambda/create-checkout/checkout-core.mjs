@@ -162,20 +162,6 @@ export async function buildLineItems(cart, catalogPath) {
 }
 
 /**
- * Stable idempotency key for a cart, so a double-click or an API Gateway retry reuses the
- * existing session instead of creating a duplicate. Derived from the normalized line items —
- * the same cart yields the same key, a different cart does not.
- */
-export async function idempotencyKey(lineItems) {
-  const canonical = lineItems
-    .map(({ price, quantity }) => `${price}:${quantity}`)
-    .sort()
-    .join('|')
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical))
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-/**
  * Resolve the Stripe secret key, memoized per container.
  *
  * In production the key lives in an SSM SecureString and only its ARN reaches the function, so
@@ -220,21 +206,33 @@ export function resetSecretCache() {
  * The Stripe client is constructed here, inside the caller's try block, rather than at module
  * scope: a missing or malformed key throws synchronously, and at module scope that surfaced as a
  * 502 with no CORS headers — which the browser then reported as a misleading CORS error.
+ *
+ * Deliberately sends NO idempotency key. It previously sent SHA-256 of the cart's line items,
+ * which was wrong in two ways. Idempotency keys are scoped to the Stripe account, so two
+ * different shoppers with the same cart within the 24h window received the *same* session — the
+ * second one landing on a stranger's checkout, unable to pay once the first had. And because the
+ * key covered only the line items, the same cart from a different origin reused a key whose
+ * stored parameters had different success_url/cancel_url, which Stripe rejects outright:
+ *   "Keys for idempotent requests can only be used with the same parameters"
+ * That is not hypothetical — carts exercised locally against this sandbox broke the first live
+ * staging deploy for 24 hours.
+ *
+ * A key must identify one logical request; a cart hash identifies a cart, which many shoppers
+ * share. The double-submit case it was meant to cover is already handled in CartDrawer, which
+ * disables the button while the request is in flight and leaves it disabled through navigation.
+ * Surplus unpaid sessions are harmless — they simply expire.
  */
 export async function createSession(lineItems, env = process.env) {
   const stripe = new Stripe(await resolveSecret(env), { apiVersion: STRIPE_API_VERSION })
   const origin = siteOrigin(env)
 
-  const session = await stripe.checkout.sessions.create(
-    {
-      mode: 'payment',
-      line_items: lineItems,
-      // {CHECKOUT_SESSION_ID} is a Stripe template literal — replaced at redirect time
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/`,
-    },
-    { idempotencyKey: await idempotencyKey(lineItems) },
-  )
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: lineItems,
+    // {CHECKOUT_SESSION_ID} is a Stripe template literal — replaced at redirect time
+    success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/`,
+  })
 
   return session.url
 }
