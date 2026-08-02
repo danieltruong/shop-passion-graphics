@@ -12,24 +12,67 @@ dist
 dist-ssr
 *.local
 
+# Yarn 4. .yarnrc.yml, yarn.lock and .yarn/releases/ ARE tracked — the vendored release is
+# what makes `yarn install` work from a stale global yarn, so it has to be in the repo.
+# No zero-installs, so the cache stays out.
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.zed/
 .DS_Store
+Thumbs.db
+desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Environment files — everything but the committed template.
+# STRIPE_SECRET_KEY lives in .env.local and AWS SSM only; see CLAUDE.md.
+.env*
+!.env.example
+
+# Credentials and key material — never belongs in the repo
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Local Netlify folder
 .netlify
 
-# SAM build artifacts
+# SAM build/package artifacts (infra/samconfig.toml IS tracked — deploy.yml needs it)
 .aws-sam/
+packaged.yaml
+packaged-template.yaml
+
+# Tool caches
+.eslintcache
+.vite/
+*.tgz
+
+# Claude Code local overrides (project settings.json IS tracked)
+.claude/settings.local.json
+
+# Catalog copied into the Lambda bundle by scripts/sync-catalog.js
+# public/products.json is the single source of truth.
+lambda/create-checkout/products.json
+
+# Coverage output
+coverage/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/

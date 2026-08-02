@@ -5,8 +5,6 @@ Description: Shop Passion Graphics — Checkout API (Lambda + HTTP API Gateway)
 # ─────────────────────────────────────────────
 # Parameters — supplied at deploy time via
 #   sam deploy --parameter-overrides ...
-# Secrets (NoEcho) are never logged or stored
-# in CloudFormation outputs.
 # ─────────────────────────────────────────────
 Parameters:
   Stage:
@@ -15,22 +13,26 @@ Parameters:
     Default: staging
     Description: Deployment stage — matches GitHub environment name.
 
-  StripeSecretKey:
+  StripeSecretArn:
     Type: String
-    NoEcho: true
     Description: >
-      Stripe secret key for server-side use only.
-      Set via GitHub Actions secret STRIPE_SECRET_KEY.
-      NEVER appears in CloudFormation outputs or logs.
+      ARN of the SSM SecureString parameter (or Secrets Manager secret) holding the Stripe
+      secret key. The key itself is NEVER passed to CloudFormation — it is fetched by the
+      function at cold start. Storing it as a plaintext Lambda environment variable exposes
+      it to anyone with lambda:GetFunctionConfiguration.
 
   AllowedOrigin:
     Type: String
-    Default: '*'
+    AllowedPattern: '^https?://.+'
     Description: >
-      Allowed CORS origin for this environment.
-      Example: https://shop.passion.graphics (prod)
-               https://staging.shop.passion.graphics (staging)
-      Set via GitHub Actions secret ALLOWED_ORIGIN.
+      Comma-separated allowlist of origins permitted to call this API, e.g.
+        https://shop.passion.graphics
+        https://staging.shop.passion.graphics,https://shop.passion.graphics
+      The first entry is also used as the site base URL for Stripe's success/cancel redirects.
+
+      Deliberately has NO default. A wildcard default meant an unset CI secret silently
+      shipped `*` to production, handing any website a free Stripe-session-minting endpoint.
+      An unset value now fails the deploy.
 
 # ─────────────────────────────────────────────
 # Globals — applied to all Lambda functions
@@ -56,19 +58,32 @@ Resources:
     Properties:
       StageName: $default
       CorsConfiguration:
-        AllowOrigins:
-          - !Ref AllowedOrigin
+        # !Split so a multi-origin ALLOWED_ORIGIN registers as separate entries. Passing the
+        # raw string registered one bogus origin ("https://a,https://b"), so every browser
+        # preflight failed while the function itself believed both were allowed.
+        AllowOrigins: !Split [',', !Ref AllowedOrigin]
         AllowHeaders:
           - Content-Type
         AllowMethods:
           - POST
           - OPTIONS
+        MaxAge: 86400
+      # Throttling — this endpoint is unauthenticated by necessity (it runs before checkout),
+      # so a rate ceiling is the only thing bounding abuse of the Stripe key.
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
 
   # Lambda function — creates Stripe Checkout Sessions.
   # CodeUri is relative to this template file's directory (infra/).
   # ../lambda/create-checkout/ → resolves to lambda/create-checkout/ at repo root.
+  # `yarn sync:catalog` must run before `sam build` so products.json is bundled.
   CheckoutFunction:
     Type: AWS::Serverless::Function
+    # Build through lambda/create-checkout/Makefile instead of SAM's built-in Node.js builder,
+    # which runs `npm install` and cannot be pointed at yarn. See that Makefile for details.
+    Metadata:
+      BuildMethod: makefile
     Properties:
       CodeUri: ../lambda/create-checkout/
       Handler: index.handler
@@ -78,8 +93,19 @@ Resources:
         Stage: !Ref Stage
       Environment:
         Variables:
-          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+          # Only the ARN travels through CloudFormation — never the key itself.
+          STRIPE_SECRET_ARN: !Ref StripeSecretArn
           ALLOWED_ORIGIN: !Ref AllowedOrigin
+      Policies:
+        - SSMParameterWithSlashPrefixReadPolicy:
+            ParameterName: !Ref StripeSecretArn
+        - Statement:
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: '*'
+              Condition:
+                StringEquals:
+                  'kms:ViaService': !Sub 'ssm.${AWS::Region}.amazonaws.com'
       Events:
         CreateCheckout:
           Type: HttpApi
@@ -88,10 +114,16 @@ Resources:
             Method: POST
             ApiId: !Ref CheckoutApi
 
+  # Explicit log group so retention is bounded — SAM's implicit group never expires.
+  CheckoutFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${CheckoutFunction}'
+      RetentionInDays: 30
+
 # ─────────────────────────────────────────────
 # Outputs — the API URL is captured by deploy.yml
 # and injected into the Vite build as VITE_CHECKOUT_API_URL.
-# This eliminates the need to manage it as a manual secret.
 # ─────────────────────────────────────────────
 Outputs:
   ApiUrl:
