@@ -9,7 +9,6 @@
   --bg-dark: #0d0d1a;
   --bg-cloud-1: #1a1a2e;
   --bg-cloud-2: #16213e;
-  --bg-cloud-3: #0f3460;
   --bg-cloud-4: #1a0a2e;
 
   /* Rainbow palette */
@@ -18,26 +17,34 @@
   --rainbow-yellow: #ffd700;
   --rainbow-green: #00ff00;
   --rainbow-blue: #00bfff;
+  --rainbow-cyan: #00ffff;
   --rainbow-purple: #9400d3;
   --rainbow-pink: #ff69b4;
-  --rainbow-magenta: #ff00ff;
+
+  /* Accent used throughout borders and buttons */
+  --accent-orange: #ff4500;
 
   /* UI colors */
   --text-primary: #ffffff;
   --text-secondary: #cccccc;
   --card-bg: rgba(30, 30, 60, 0.85);
-  --card-border: #c0c0c0;
-  --card-border-gold: #ffd700;
+
+  /* Disabled controls — #000 on #888 failed AA at this font size. */
+  --disabled-bg: #4a4a5a;
+  --disabled-text: #e8e8ef;
 
   /* WordArt effects */
   --glow-cyan: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #00ffff;
-  --glow-rainbow: 0 0 10px #ff0000, 0 0 20px #ff8c00, 0 0 30px #ffd700, 0 0 40px #00ff00;
   --glow-pink: 0 0 10px #ff69b4, 0 0 20px #ff69b4, 0 0 40px #ff1493;
 
   /* Beveled borders */
   --border-bevel: 4px ridge #c0c0c0;
   --border-gold: 4px outset #ffd700;
-  --border-blue: 3px ridge #4169e1;
+
+  /* Focus ring — one definition, applied via .focus-ring-target below */
+  --focus-ring-color: var(--rainbow-yellow);
+  --focus-ring: 3px solid var(--focus-ring-color);
+  --focus-ring-offset: 2px;
 
   /* Spacing */
   --space-xs: 0.5rem;
@@ -67,6 +74,20 @@
   animation: rainbow-shift 3s linear infinite;
 }
 
+/*
+  Forced-colors mode strips background images, and background-clip: text has nothing left to
+  clip — leaving transparent text. Without this the site title, every section heading, and the
+  cart title were invisible in Windows High Contrast.
+*/
+@media (forced-colors: active) {
+  .rainbow-text {
+    background: none;
+    -webkit-text-fill-color: CanvasText;
+    color: CanvasText;
+    animation: none;
+  }
+}
+
 @keyframes rainbow-shift {
   0% { background-position: 0% center; }
   100% { background-position: 200% center; }
@@ -77,12 +98,52 @@
   text-shadow: var(--glow-cyan);
 }
 
-.wordart-outline {
-  -webkit-text-stroke: 2px var(--rainbow-yellow);
-  color: transparent;
+/* ===== SHARED UTILITIES ===== */
+
+/* Visible to screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* ===== SPINNING ANIMATION ===== */
+/*
+  One focus ring for every interactive control, replacing five copy-pasted declarations that
+  had drifted apart in colour and width.
+*/
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Skip link — visible only once focused. */
+.skip-link {
+  position: absolute;
+  left: var(--space-sm);
+  top: -100px;
+  z-index: 200;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  border: var(--border-gold);
+  font-family: var(--font-body);
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: var(--space-sm);
+}
+
+/* ===== KEYFRAMES ===== */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -105,10 +166,45 @@
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  50% { opacity: 0.35; }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
+}
+
+/*
+  WCAG 2.2.2 — the blink ran `infinite`, which has no pause mechanism. Six cycles is under the
+  five-second threshold, so it keeps the retro joke without the violation.
+*/
+.blink {
+  animation: blink 1s steps(1, end) 6;
+}
+
+/*
+  Reduced motion. Previously exactly one rule in the codebase honoured this preference; every
+  infinite animation ran regardless. Framer Motion is covered separately by
+  <MotionConfig reducedMotion="user"> in main.jsx.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep the gradient legible rather than freezing mid-shift. */
+  .rainbow-text {
+    animation: none;
+    background-position: 0% center;
+  }
+
+  .blink {
+    animation: none;
+    opacity: 1;
+  }
 }

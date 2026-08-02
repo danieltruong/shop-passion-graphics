@@ -9,8 +9,7 @@
       "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfY0p4aTZKak5PWUFDODY3UEdaejJKQTlF00iKIKCCS0",
       "active": true,
       "stripeProductId": "prod_UahrSUIPvwuJ6i",
-      "stripePriceId": "price_1TbWRQ5FIOXpGKH62CpWdj6X",
-      "paymentLink": null
+      "stripePriceId": "price_1TbWRQ5FIOXpGKH62CpWdj6X"
     },
     {
       "productId": "prod_UagVOmlTQPME17",
@@ -21,10 +20,9 @@
       "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfUmkyZ0JpRmlMcG1OcnpMR2piNjVtdlhl00swQNhZ1i",
       "active": true,
       "stripeProductId": "prod_UagVOmlTQPME17",
-      "stripePriceId": "price_1TbV8k5FIOXpGKH60y2koJhi",
-      "paymentLink": "https://buy.stripe.com/test_8x2fZabpLdNq1Mdak193y00"
+      "stripePriceId": "price_1TbV8k5FIOXpGKH60y2koJhi"
     }
   ],
-  "generated": "2026-05-27T06:15:02.730Z",
+  "generated": "2026-07-25T05:08:33.982Z",
   "source": "Stripe API"
 }

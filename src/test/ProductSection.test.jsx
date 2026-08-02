@@ -1,57 +1,68 @@
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import ProductSection from '../components/ProductSection'
+import { frog, unpriced } from './fixtures'
 
-const mockProducts = [
-  {
-    productId: 'prod_test1',
-    name: 'Frog Sticker Pack',
-    description: 'Premium holographic frog stickers',
-    price: 999,
-    currency: 'USD',
-    imageUrl: '/product_placeholder.svg',
-    stripePriceId: 'price_test_abc',
-  },
-  {
-    productId: 'prod_test2',
-    name: 'Galaxy Print',
-    description: 'Limited edition galaxy print',
-    price: 2499,
-    currency: 'USD',
-    imageUrl: '/product_placeholder.svg',
-    stripePriceId: null,
-  },
-]
+const mockProducts = [frog, unpriced]
 
 describe('ProductSection', () => {
-  it('renders "coming soon" when products array is empty', () => {
-    render(<ProductSection products={[]} />)
+  it('renders "coming soon" for an empty or missing catalog', () => {
+    const { rerender } = render(<ProductSection products={[]} />)
+    expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
+
+    rerender(<ProductSection products={undefined} />)
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
   })
 
-  it('renders "coming soon" when products is undefined', () => {
-    render(<ProductSection products={undefined} />)
-    expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
+  it('renders a load error instead of "coming soon" when the fetch failed', () => {
+    render(<ProductSection products={[]} loadError="boom" />)
+    expect(screen.getByRole('alert')).toHaveTextContent(/couldn't load the shop/i)
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument()
   })
 
   it('renders the shop heading when products are provided', () => {
-    render(<ProductSection products={mockProducts} />)
+    render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
     expect(screen.getByRole('heading', { name: /shop/i })).toBeInTheDocument()
   })
 
   it('renders all product names', () => {
-    render(<ProductSection products={mockProducts} />)
-    expect(screen.getByText('Frog Sticker Pack')).toBeInTheDocument()
-    expect(screen.getByText('Galaxy Print')).toBeInTheDocument()
-  })
-
-  it('shows Add to Cart for products with a Stripe price', () => {
     render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
-    const addButtons = screen.getAllByRole('button', { name: /add to cart/i })
-    expect(addButtons).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Frog', level: 3 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Mystery Item', level: 3 })).toBeInTheDocument()
   })
 
-  it('shows Coming Soon for products without a Stripe price', () => {
+  it('shows Add to Cart only for products with a Stripe price', () => {
+    render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
+    expect(screen.getAllByRole('button', { name: /add to cart/i })).toHaveLength(1)
+  })
+
+  it('shows a disabled Coming Soon for products without a Stripe price', () => {
     render(<ProductSection products={mockProducts} onAddToCart={() => {}} />)
     expect(screen.getByRole('button', { name: /coming soon/i })).toBeDisabled()
+  })
+
+  it('calls onAddToCart with the product', async () => {
+    const handleAddToCart = vi.fn()
+    render(<ProductSection products={mockProducts} onAddToCart={handleAddToCart} />)
+    await userEvent.click(screen.getByRole('button', { name: /add to cart/i }))
+    expect(handleAddToCart).toHaveBeenCalledTimes(1)
+    expect(handleAddToCart).toHaveBeenCalledWith(frog)
+  })
+
+  it('formats prices in the catalog currency, not a hardcoded dollar sign', () => {
+    render(<ProductSection products={[frog]} onAddToCart={() => {}} />)
+    expect(screen.getByText(/100\.00/)).toBeInTheDocument()
+    expect(screen.queryByText(/CAD\s*\$/)).not.toBeInTheDocument()
+  })
+
+  it('falls back to the placeholder image when a product has none', () => {
+    const { container } = render(
+      <ProductSection products={[{ ...frog, imageUrl: '' }]} onAddToCart={() => {}} />,
+    )
+    expect(container.querySelector('.product-image img')).toHaveAttribute(
+      'src',
+      '/product_placeholder.svg',
+    )
   })
 })

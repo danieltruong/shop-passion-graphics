@@ -1,7 +1,16 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { fadeIn, scaleIn, VIEWPORTS, DELAYS, withDelay } from '../utils/animations'
 
+// Hoisted: withDelay is a factory, and Framer propagates variants by reference. Calling it
+// inline produced a fresh variant tree on every render.
+const FROG_IN = withDelay(scaleIn, DELAYS.short)
+const TAGLINE_IN = withDelay(fadeIn, DELAYS.medium)
+const BLURB_IN = withDelay(fadeIn, DELAYS.long)
+
 export default function Hero() {
+  const [marqueePaused, setMarqueePaused] = useState(false)
+
   return (
     <motion.section
       className="hero"
@@ -13,43 +22,50 @@ export default function Hero() {
       <motion.div
         className="decoration decoration--wobble"
         style={{ fontSize: '4rem', marginBottom: '1rem' }}
-        variants={withDelay(scaleIn, DELAYS.short)}
+        variants={FROG_IN}
+        aria-hidden="true"
       >
         🐸
       </motion.div>
 
-      <motion.h2
-        className="hero-tagline rainbow-text"
-        variants={withDelay(fadeIn, DELAYS.medium)}
-      >
+      <motion.h2 className="hero-tagline rainbow-text" variants={TAGLINE_IN}>
         graphic design is my passion
       </motion.h2>
 
-      <motion.p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '1.1rem',
-          color: 'var(--text-secondary)',
-          marginBottom: 'var(--space-md)'
-        }}
-        variants={withDelay(fadeIn, DELAYS.long)}
-      >
+      <motion.p className="hero-blurb" variants={BLURB_IN}>
         Premium products, crafted with unmatched artistic vision
       </motion.p>
 
-      <div className="hero-marquee">
-        <span>
-          ★ FREE SHIPPING ★ AMAZING DEALS ★ WOW ★ SUCH GRAPHICS ★ VERY DESIGN ★ FREE SHIPPING ★ AMAZING DEALS ★ WOW ★ SUCH GRAPHICS ★ VERY DESIGN ★
-        </span>
+      {/*
+        WCAG 2.2.2 — content that moves for more than five seconds needs a pause mechanism.
+        The animation is also stopped entirely under prefers-reduced-motion (see App.css).
+      */}
+      <div className="hero-marquee-wrap">
+        <div className={`hero-marquee${marqueePaused ? ' hero-marquee--paused' : ''}`}>
+          <span>
+            ★ FREE SHIPPING ★ AMAZING DEALS ★ WOW ★ SUCH GRAPHICS ★ VERY DESIGN ★ FREE SHIPPING
+            ★ AMAZING DEALS ★ WOW ★ SUCH GRAPHICS ★ VERY DESIGN ★
+          </span>
+        </div>
+        <button
+          className="marquee-toggle"
+          onClick={() => setMarqueePaused((p) => !p)}
+          aria-pressed={marqueePaused}
+        >
+          {marqueePaused ? 'Resume scrolling banner' : 'Pause scrolling banner'}
+        </button>
       </div>
 
-      <motion.div
-        style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '2rem' }}
-        variants={withDelay(fadeIn, DELAYS.long)}
-      >
-        <span className="decoration--float" style={{ animationDelay: '0s' }}>💎</span>
-        <span className="decoration--float" style={{ animationDelay: '0.5s' }}>🌟</span>
-        <span className="decoration--float" style={{ animationDelay: '1s' }}>💎</span>
+      <motion.div className="hero-gems" variants={BLURB_IN} aria-hidden="true">
+        <span className="decoration--float" style={{ animationDelay: '0s' }}>
+          💎
+        </span>
+        <span className="decoration--float" style={{ animationDelay: '0.5s' }}>
+          🌟
+        </span>
+        <span className="decoration--float" style={{ animationDelay: '1s' }}>
+          💎
+        </span>
       </motion.div>
     </motion.section>
   )
