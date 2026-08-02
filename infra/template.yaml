@@ -61,17 +61,18 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
-      CorsConfiguration:
-        # !Split so a multi-origin ALLOWED_ORIGIN registers as separate entries. Passing the
-        # raw string registered one bogus origin ("https://a,https://b"), so every browser
-        # preflight failed while the function itself believed both were allowed.
-        AllowOrigins: !Split [',', !Ref AllowedOrigin]
-        AllowHeaders:
-          - Content-Type
-        AllowMethods:
-          - POST
-          - OPTIONS
-        MaxAge: 86400
+      # No CorsConfiguration here — CORS is owned by the function, which answers OPTIONS itself
+      # (see the Preflight event below). Two reasons, both learned the hard way:
+      #
+      # 1. SAM mangles it. `AllowOrigins: !Split [',', !Ref AllowedOrigin]` transformed into
+      #    `"x-amazon-apigateway-cors": {"Fn::Split": [...]}` — the AllowOrigins value promoted
+      #    to be the entire cors object, with AllowHeaders, AllowMethods and MaxAge dropped.
+      #    API Gateway accepted that and configured no CORS at all, so OPTIONS returned 404 and
+      #    every browser preflight failed. curl-based POSTs kept working, which hid it.
+      # 2. When HTTP API CORS *is* configured, API Gateway overwrites whatever CORS headers the
+      #    function returns. That would silently replace corsHeaders() — which allowlists per
+      #    origin, sets Vary: Origin, and returns no ACAO at all for a disallowed origin — with
+      #    a static list. The function's version is the one covered by tests.
       # Throttling — this endpoint is unauthenticated by necessity (it runs before checkout),
       # so a rate ceiling is the only thing bounding abuse of the Stripe key.
       DefaultRouteSettings:
@@ -125,6 +126,17 @@ Resources:
           Properties:
             Path: /create-checkout
             Method: POST
+            ApiId: !Ref CheckoutApi
+        # Browsers preflight this request because it sends Content-Type: application/json.
+        # Without an OPTIONS route the gateway answers 404 with no CORS headers and the browser
+        # blocks the POST it was about to make. handleCheckout returns 204 for an allowed origin
+        # and 403 for anything else; Access-Control-Max-Age keeps this to one invocation per
+        # browser per day.
+        Preflight:
+          Type: HttpApi
+          Properties:
+            Path: /create-checkout
+            Method: OPTIONS
             ApiId: !Ref CheckoutApi
 
   # Explicit log group so retention is bounded — SAM's implicit group never expires.
