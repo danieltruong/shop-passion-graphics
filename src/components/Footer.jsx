@@ -1,9 +1,17 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { fadeIn, VIEWPORTS } from '../utils/animations'
 
-const visitorCount = Math.floor(Math.random() * 900000) + 100000
+/** Purely decorative retro flourish — not a real analytics figure. */
+function randomVisitorCount() {
+  return Math.floor(Math.random() * 900000) + 100000
+}
 
 export default function Footer() {
+  // Held in state rather than computed at module scope: a module-level Math.random() runs at
+  // import time, which makes the component non-deterministic in tests and would produce a
+  // server/client hydration mismatch if this app ever pre-renders.
+  const [visitorCount] = useState(randomVisitorCount)
 
   return (
     <motion.footer
@@ -14,11 +22,13 @@ export default function Footer() {
       variants={fadeIn}
     >
       <p className="footer-counter">
-        🌐 You are visitor #{visitorCount.toLocaleString()} 🌐
+        <span aria-hidden="true">🌐</span> You are visitor #{visitorCount.toLocaleString()}{' '}
+        <span aria-hidden="true">🌐</span>
       </p>
 
-      <div style={{ margin: '1rem 0', fontSize: '1.5rem' }}>
-        🚧 ⚠️ Site under construction ⚠️ 🚧
+      <div className="footer-construction">
+        <span aria-hidden="true">🚧 ⚠️</span> Site under construction{' '}
+        <span aria-hidden="true">⚠️ 🚧</span>
       </div>
 
       <p className="footer-text">
@@ -26,11 +36,13 @@ export default function Footer() {
       </p>
 
       <p className="footer-passion wordart-glow">
-        ✨ made with passion ✨
+        <span aria-hidden="true">✨</span> made with passion <span aria-hidden="true">✨</span>
       </p>
 
-      <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-        <span style={{ animation: 'blink 1s infinite' }}>Best viewed in Netscape Navigator 4.0</span>
+      <div className="footer-netscape">
+        {/* WCAG 2.2.2: the blink animation is gated on prefers-reduced-motion in theme.css
+            and stops on its own after a few cycles rather than running forever. */}
+        <span className="blink">Best viewed in Netscape Navigator 4.0</span>
       </div>
     </motion.footer>
   )

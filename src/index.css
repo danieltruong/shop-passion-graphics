@@ -10,10 +10,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Global reduced-motion override lives in theme.css; smooth scroll is reset there too. */
+
 body {
   font-family: var(--font-body);
   color: var(--text-primary);
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 
   /* Dark smoky/cloudy background */
@@ -54,7 +56,7 @@ body::before {
 }
 
 a {
-  color: var(--rainbow-cyan, #00ffff);
+  color: var(--rainbow-cyan);
   text-decoration: underline wavy;
 }
 
