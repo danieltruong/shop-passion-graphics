@@ -102,13 +102,26 @@ esac
 ok "All preflight checks passed"
 
 # ── 3. OIDC provider ──────────────────────────────────────────────────────────────────────────
-# Only one provider per URL per account is allowed, so detect an existing one rather than
-# failing the stack with EntityAlreadyExists.
+# Only one provider per URL per account is allowed, so an unconditional create fails with
+# EntityAlreadyExists — hence the CreateOidcProvider condition.
+#
+# The check must distinguish a provider THIS STACK OWNS from a genuinely external one. Asking
+# only "does one exist?" is wrong on the second run: the provider found is the one the first
+# run created, answering No flips the condition false, and CloudFormation deletes it. The stack
+# still updates cleanly and every later deploy fails with "The web identity token provided
+# could not be validated" — a broken deploy caused by the fix-up script, not the deploy.
 step "Checking for an existing GitHub OIDC provider"
-if aws_ iam list-open-id-connect-providers --output text \
-     | grep -q 'token.actions.githubusercontent.com'; then
+owned=$(aws_ cloudformation describe-stack-resource \
+          --stack-name "$STACK" --logical-resource-id GitHubOidcProvider \
+          --query 'StackResourceDetail.PhysicalResourceId' --output text 2>/dev/null || true)
+
+if [ -n "$owned" ] && [ "$owned" != "None" ]; then
+  create_oidc=Yes
+  info "This stack already owns one — keeping it."
+elif aws_ iam list-open-id-connect-providers --output text \
+       | grep -q 'token.actions.githubusercontent.com'; then
   create_oidc=No
-  info "One already exists — the stack will reuse it."
+  info "An external one exists — the stack will reuse it."
 else
   create_oidc=Yes
   info "None found — the stack will create it."
