@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "stripe": {
+      "type": "http",
+      "url": "https://mcp.stripe.com",
+      "headersHelper": "${CLAUDE_PROJECT_DIR:-.}/scripts/mcp-stripe-headers.sh"
+    }
+  }
+}
