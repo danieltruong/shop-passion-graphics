@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,6 +9,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.js'],
+    // `nmHoistingLimits: workspaces` gives lambda/create-checkout its own copy of stripe, so
+    // checkout-core.mjs and a test file resolve 'stripe' to two different physical modules and
+    // vi.mock('stripe') silently fails to intercept. Collapsing them onto the root copy for the
+    // test run makes the mock apply; nothing but the mock is ever exercised.
+    alias: {
+      stripe: fileURLToPath(new URL('./node_modules/stripe', import.meta.url)),
+    },
     // e2e/*.spec.js matches vitest's default include glob but is a Playwright suite —
     // it imports @playwright/test and cannot run under jsdom. Run it via `yarn test:e2e`.
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],

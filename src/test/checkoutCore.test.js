@@ -2,17 +2,34 @@
  * Tests for the shared checkout core — the security-critical half of the app.
  *
  * These exercise the pure validation surface (CORS policy, catalog allowlist, cart validation,
- * redirect origin). Stripe session creation itself is not covered here; it needs a live key.
+ * redirect origin) plus the shape of the call to Stripe, with the SDK stubbed — no live key.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+// Stubbed so createSession's call to Stripe can be asserted without a live key. This works only
+// because vite.config.js aliases 'stripe' to a single copy for the test run — `nmHoistingLimits:
+// workspaces` otherwise gives checkout-core.mjs its own, which this mock would not intercept.
+const { sessionsCreate, stripeStub } = vi.hoisted(() => {
+  const create = vi.fn()
+  return {
+    sessionsCreate: create,
+    stripeStub: () => ({
+      default: class {
+        checkout = { sessions: { create: (...args) => create(...args) } }
+      },
+    }),
+  }
+})
+vi.mock('stripe', stripeStub)
+
 import {
   corsHeaders,
   allowedOrigins,
   siteOrigin,
   buildLineItems,
-  idempotencyKey,
+  createSession,
   resetCatalogCache,
   handleCheckout,
   MAX_QTY,
@@ -151,22 +168,39 @@ describe('buildLineItems', () => {
   })
 })
 
-describe('idempotencyKey', () => {
-  it('is stable for the same cart', async () => {
-    const items = [{ price: 'price_a', quantity: 1 }]
-    expect(await idempotencyKey(items)).toBe(await idempotencyKey(items))
+describe('createSession', () => {
+  const lineItems = [{ price: 'price_a', quantity: 1 }]
+  const sessionEnv = { ...env, STRIPE_SECRET_KEY: 'sk_test_fake' }
+
+  beforeEach(() => {
+    sessionsCreate.mockClear()
+    sessionsCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/c/pay/cs_test_x' })
   })
 
-  it('ignores line ordering', async () => {
-    const a = [{ price: 'price_a', quantity: 1 }, { price: 'price_b', quantity: 2 }]
-    const b = [{ price: 'price_b', quantity: 2 }, { price: 'price_a', quantity: 1 }]
-    expect(await idempotencyKey(a)).toBe(await idempotencyKey(b))
+  it('sends no idempotency key', async () => {
+    // Regression: the key used to be SHA-256 of the line items. Account-scoped keys meant two
+    // shoppers with identical carts shared one session, and because the hash omitted the origin,
+    // the same cart from a different origin reused a key whose stored parameters had different
+    // redirect URLs — which Stripe rejects, breaking checkout for 24 hours.
+    await createSession(lineItems, sessionEnv)
+    expect(sessionsCreate).toHaveBeenCalledTimes(1)
+    expect(sessionsCreate.mock.calls[0]).toHaveLength(1)
   })
 
-  it('differs when the quantity changes', async () => {
-    expect(await idempotencyKey([{ price: 'price_a', quantity: 1 }])).not.toBe(
-      await idempotencyKey([{ price: 'price_a', quantity: 2 }]),
-    )
+  it('builds both redirect URLs from ALLOWED_ORIGIN, never from the request', async () => {
+    await createSession(lineItems, sessionEnv)
+    const [params] = sessionsCreate.mock.calls[0]
+    expect(params.success_url).toBe(`${ORIGIN}/success?session_id={CHECKOUT_SESSION_ID}`)
+    expect(params.cancel_url).toBe(`${ORIGIN}/`)
+    expect(params.mode).toBe('payment')
+  })
+
+  it('sends only price and quantity — never an amount', async () => {
+    await createSession(lineItems, sessionEnv)
+    const [params] = sessionsCreate.mock.calls[0]
+    for (const item of params.line_items) {
+      expect(Object.keys(item).sort()).toEqual(['price', 'quantity'])
+    }
   })
 })
 
