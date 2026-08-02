@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn lint)",
+      "Bash(yarn test:run)",
+      "Bash(yarn coverage)",
+      "Bash(yarn build)",
+      "Bash(yarn install)",
+      "Bash(yarn install --immutable)",
+      "Bash(yarn vitest *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+
+      "mcp__mcpjungle__context7__resolve-library-id",
+      "mcp__mcpjungle__context7__query-docs",
+
+      "mcp__mcpjungle__github__get_file_contents",
+      "mcp__mcpjungle__github__get_issue",
+      "mcp__mcpjungle__github__get_pull_request",
+      "mcp__mcpjungle__github__get_pull_request_files",
+      "mcp__mcpjungle__github__get_pull_request_comments",
+      "mcp__mcpjungle__github__get_pull_request_reviews",
+      "mcp__mcpjungle__github__get_pull_request_status",
+      "mcp__mcpjungle__github__list_commits",
+      "mcp__mcpjungle__github__list_issues",
+      "mcp__mcpjungle__github__list_pull_requests",
+      "mcp__mcpjungle__github__search_code",
+      "mcp__mcpjungle__github__search_issues",
+      "mcp__mcpjungle__github__search_repositories",
+
+      "mcp__stripe__search_stripe_documentation",
+      "mcp__stripe__stripe_api_search",
+      "mcp__stripe__stripe_api_details",
+      "mcp__stripe__stripe_api_read",
+      "mcp__stripe__get_stripe_account_info"
+    ]
+  }
+}
