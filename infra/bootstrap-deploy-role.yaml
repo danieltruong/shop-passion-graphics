@@ -147,10 +147,17 @@ Resources:
 
               # ── S3: the website bucket deploy.yml syncs into ──
               # `aws s3 sync --delete` needs ListBucket and DeleteObject, not just PutObject.
+              # GetBucketPolicy/PutBucketPolicy/DeleteBucketPolicy are for the SiteBucketPolicy
+              # resource in infra/template.yaml, which replaces the bucket's public-read policy
+              # with one admitting only the CloudFront distribution. The bucket itself is not
+              # owned by that stack — only its policy is.
               - Effect: Allow
                 Action:
                   - s3:ListBucket
                   - s3:GetBucketLocation
+                  - s3:GetBucketPolicy
+                  - s3:PutBucketPolicy
+                  - s3:DeleteBucketPolicy
                 Resource: !Sub 'arn:aws:s3:::${SiteBucketName}'
               - Effect: Allow
                 Action:
@@ -235,10 +242,43 @@ Resources:
                   - logs:ListTagsForResource
                 Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/shop-passion-*'
 
-              # ── CloudFront invalidation (last step of deploy.yml) ──
+              # ── CloudFront: the distribution that serves the site over HTTPS ──
+              # This used to be CreateInvalidation alone, from when the distribution was
+              # assumed to be created by hand. infra/template.yaml now owns it, so the role
+              # needs the whole lifecycle — without CreateDistribution the first deploy fails
+              # mid-changeset and rolls back.
               - Effect: Allow
-                Action: cloudfront:CreateInvalidation
+                Action:
+                  - cloudfront:CreateDistribution
+                  - cloudfront:UpdateDistribution
+                  - cloudfront:DeleteDistribution
+                  - cloudfront:GetDistribution
+                  - cloudfront:GetDistributionConfig
+                  - cloudfront:TagResource
+                  - cloudfront:UntagResource
+                  - cloudfront:ListTagsForResource
+                  - cloudfront:CreateInvalidation
                 Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/*'
+
+              # Origin Access Control — what lets CloudFront sign its S3 reads, so the bucket
+              # needs no public grant.
+              - Effect: Allow
+                Action:
+                  - cloudfront:CreateOriginAccessControl
+                  - cloudfront:UpdateOriginAccessControl
+                  - cloudfront:DeleteOriginAccessControl
+                  - cloudfront:GetOriginAccessControl
+                  - cloudfront:GetOriginAccessControlConfig
+                Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*'
+
+              # The cache and response-headers policies the distribution references are
+              # AWS-managed and live outside this account, so they have no account-scoped ARN
+              # to name here.
+              - Effect: Allow
+                Action:
+                  - cloudfront:GetCachePolicy
+                  - cloudfront:GetResponseHeadersPolicy
+                Resource: '*'
 
 Outputs:
   RoleArn:

@@ -92,8 +92,14 @@ both cap their peer range at `^9`. Revisit when they ship v10 support.
   `price_…` that isn't in `public/products.json` is rejected.
 - **Redirect URLs come from `ALLOWED_ORIGIN`**, never from request headers. Deriving them from
   the `Origin`/`Host` header is an open redirect.
-- **`ALLOWED_ORIGIN` has no wildcard fallback.** If it is unset, the deploy fails — it does not
-  silently ship `*`.
+- **`ALLOWED_ORIGIN` has no wildcard fallback, and is not a secret.** `infra/template.yaml`
+  derives it from the CloudFront distribution in the same stack
+  (`https://${SiteDistribution.DomainName}`), so it cannot be unset, cannot be `*`, and cannot
+  name an origin that does not exist. It was a required GitHub secret until the CloudFront
+  change; that had a chicken-and-egg problem — the site's own URL had to be typed into a secret
+  before the resource defining it existed, and the value in it was the HTTP-only s3-website
+  endpoint. `CustomDomainOrigins` adds a custom domain on top; it is optional and goes *first*,
+  because the first entry is Stripe's redirect base.
 - **Money is integers in minor units.** Never format currency by hand; use
   `src/utils/formatPrice.js`, which handles zero-decimal currencies (JPY) correctly. The live
   catalog is CAD, not USD.
@@ -116,8 +122,11 @@ The app is wrapped in `<MotionConfig reducedMotion="user">`, and CSS animations 
 | Variable | Where | Notes |
 |---|---|---|
 | `STRIPE_SECRET_KEY` | Lambda / `.env.local` | Server-side only. Never in the bundle. |
-| `ALLOWED_ORIGIN` | Lambda | Comma-separated origin allowlist. Required. |
+| `ALLOWED_ORIGIN` | Lambda | Comma-separated origin allowlist. Set by the SAM template from the CloudFront domain — **not** a GitHub secret. |
 | `VITE_CHECKOUT_API_URL` | build time | Public URL, not a secret. Injected from the SAM stack output by `deploy.yml`. |
+
+GitHub environment secrets consumed by `deploy.yml`: `AWS_ROLE_ARN`, `STRIPE_SECRET_ARN` and
+`S3_BUCKET_NAME` are required; `CUSTOM_DOMAIN_ORIGINS` is optional and normally unset.
 
 `.env.local` is gitignored and must stay that way.
 
@@ -125,6 +134,24 @@ The app is wrapped in `<MotionConfig reducedMotion="user">`, and CSS animations 
 
 Push to `develop` → CI (lint + test + build) must pass → `deploy.yml` runs SAM, then builds the
 frontend with the stack's API URL and syncs to S3.
+
+**The site is served by CloudFront, not by the bucket.** The S3 *website* endpoint is HTTP-only
+— it has no TLS listener, so `https://…s3-website…` times out on port 443 rather than failing
+visibly, and browsers with HTTPS-First silently upgrade the URL and hang. The bucket is now
+private: `SiteBucketPolicy` in `infra/template.yaml` grants `s3:GetObject` only to the
+distribution via Origin Access Control, so the website endpoint is dead by design. The live URL
+is the stack's `SiteUrl` output, which `deploy.yml` prints at the end of the run.
+
+Two consequences worth knowing:
+
+- **`infra/bootstrap-deploy-role.yaml` is not deployed by `deploy.yml`.** It grants the role the
+  CloudFront and `PutBucketPolicy` permissions the stack needs. After changing it, re-run
+  `bash infra/bootstrap.sh` with admin credentials or the next deploy fails mid-changeset.
+- **SPA routing is CloudFront's job now.** OAC requires the S3 REST endpoint, which has no
+  index-document or error-document routing, so `DefaultRootObject` and `CustomErrorResponses`
+  replace them. `/success` — where Stripe returns the buyer — is a real deep link handled by
+  `src/App.jsx`, and 403 must be mapped as well as 404: a private bucket answers a missing key
+  with `AccessDenied`, not `NoSuchKey`.
 
 ## Docs
 

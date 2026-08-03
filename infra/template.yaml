@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Shop Passion Graphics — Checkout API (Lambda + HTTP API Gateway)
+Description: >
+  Shop Passion Graphics — Checkout API (Lambda + HTTP API Gateway) and the CloudFront
+  distribution that serves the static site over HTTPS.
 
 # ─────────────────────────────────────────────
 # Parameters — supplied at deploy time via
@@ -25,18 +27,43 @@ Parameters:
       function at cold start. Storing it as a plaintext Lambda environment variable exposes
       it to anyone with lambda:GetFunctionConfiguration.
 
-  AllowedOrigin:
+  SiteBucketName:
     Type: String
-    AllowedPattern: '^https?://.+'
+    AllowedPattern: '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$'
     Description: >
-      Comma-separated allowlist of origins permitted to call this API, e.g.
-        https://shop.passion.graphics
-        https://staging.shop.passion.graphics,https://shop.passion.graphics
-      The first entry is also used as the site base URL for Stripe's success/cancel redirects.
+      The S3 bucket deploy.yml syncs dist/ into (the S3_BUCKET_NAME secret). This stack does
+      NOT create it — the bucket predates the stack — but it does own the bucket policy, which
+      it rewrites to grant read access to this distribution and nobody else.
 
-      Deliberately has NO default. A wildcard default meant an unset CI secret silently
-      shipped `*` to production, handing any website a free Stripe-session-minting endpoint.
-      An unset value now fails the deploy.
+  CustomDomainOrigins:
+    Type: String
+    Default: ''
+    # Empty is valid, and is the normal case for staging.
+    AllowedPattern: '^$|^https?://[^,]+(,https?://[^,]+)*$'
+    Description: >
+      Custom-domain origins that front this same distribution, comma-separated, e.g.
+      https://shop.passion.graphics. Normally empty — staging has no custom domain.
+
+      The CloudFront distribution's own domain is ALWAYS allowed and is appended
+      automatically, so this parameter is never required. That is what removes the old
+      chicken-and-egg: the site origin is no longer a secret that has to be guessed before the
+      resource that defines it exists.
+
+      ORDER MATTERS. siteOrigin() in checkout-core.mjs takes the FIRST entry of ALLOWED_ORIGIN
+      as the base for Stripe's success_url and cancel_url, so these go ahead of the CloudFront
+      domain: once a custom domain exists it is the address buyers should be returned to, not
+      d111abcdef8.cloudfront.net. With this empty, the CloudFront domain is first by default,
+      which is correct for staging.
+
+      The hazard the old required-secret rule guarded against — an unset value silently
+      shipping `*` — cannot occur now: the value is derived from a resource in this stack and
+      is never a wildcard.
+
+# ─────────────────────────────────────────────
+# Conditions
+# ─────────────────────────────────────────────
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref CustomDomainOrigins, '']]
 
 # ─────────────────────────────────────────────
 # Globals — applied to all Lambda functions
@@ -64,7 +91,7 @@ Resources:
       # No CorsConfiguration here — CORS is owned by the function, which answers OPTIONS itself
       # (see the Preflight event below). Two reasons, both learned the hard way:
       #
-      # 1. SAM mangles it. `AllowOrigins: !Split [',', !Ref AllowedOrigin]` transformed into
+      # 1. SAM mangles it. `AllowOrigins: !Split [',', <the origin allowlist>]` transformed into
       #    `"x-amazon-apigateway-cors": {"Fn::Split": [...]}` — the AllowOrigins value promoted
       #    to be the entire cors object, with AllowHeaders, AllowMethods and MaxAge dropped.
       #    API Gateway accepted that and configured no CORS at all, so OPTIONS returned 404 and
@@ -100,7 +127,16 @@ Resources:
         Variables:
           # Only the ARN travels through CloudFormation — never the key itself.
           STRIPE_SECRET_ARN: !Ref StripeSecretArn
-          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          # Derived from the distribution in this stack, not from a secret. CloudFormation
+          # orders the dependency for us — the function is updated only once the distribution
+          # has a domain name — so no secret has to name the site before it exists.
+          #
+          # The CloudFront domain is always present. It goes last when a custom domain is
+          # configured, because the first entry is what Stripe redirects buyers back to.
+          ALLOWED_ORIGIN: !If
+            - HasCustomDomain
+            - !Sub '${CustomDomainOrigins},https://${SiteDistribution.DomainName}'
+            - !Sub 'https://${SiteDistribution.DomainName}'
       Policies:
         # A raw statement, not SAM's SSMParameterWithSlashPrefixReadPolicy. That template takes a
         # parameter *name* and builds the ARN itself by concatenation —
@@ -146,6 +182,125 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${CheckoutFunction}'
       RetentionInDays: 30
 
+  # ───────────────────────────────────────────
+  # Static site delivery
+  #
+  # The site used to be served straight off the bucket's S3 *website* endpoint. That endpoint
+  # is HTTP-only — it has no TLS listener at all, so https://…s3-website…/ does not merely
+  # warn, it times out on port 443. Browsers with HTTPS-First enabled silently upgrade the URL
+  # and then hang, which reads as "the site is down" while the bucket is perfectly healthy.
+  # CloudFront is what puts a real certificate in front of it.
+  # ───────────────────────────────────────────
+
+  # Origin Access Control (the successor to Origin Access Identity) lets CloudFront sign its
+  # requests to S3 with SigV4, so the bucket needs no public read grant at all.
+  SiteOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-site-oac'
+        Description: !Sub 'Signs CloudFront → S3 reads for ${SiteBucketName}'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  SiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      Tags:
+        - Key: Project
+          Value: shop-passion-graphics
+        - Key: Stage
+          Value: !Ref Stage
+      DistributionConfig:
+        Comment: !Sub 'shop.passion.graphics — ${Stage}'
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        # NA + EU only. Canada is in PriceClass_100, and this is the cheapest tier.
+        PriceClass: PriceClass_100
+        DefaultRootObject: index.html
+
+        Origins:
+          # The REST endpoint (…s3.region.amazonaws.com), NOT the website endpoint
+          # (…s3-website-…). OAC signs with SigV4, and the website endpoint does not accept
+          # SigV4 — it only serves anonymous requests, which is exactly what we are removing.
+          # The trade-off is that S3's index-document and error-document routing is lost with
+          # it, so both are reimplemented below (DefaultRootObject + CustomErrorResponses).
+          - Id: SiteS3Origin
+            DomainName: !Sub '${SiteBucketName}.s3.${AWS::Region}.amazonaws.com'
+            OriginAccessControlId: !GetAtt SiteOriginAccessControl.Id
+            # Required, and required to be empty: this is the legacy OAI field, and setting
+            # both it and OriginAccessControlId is rejected.
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+
+        DefaultCacheBehavior:
+          TargetOriginId: SiteS3Origin
+          # The whole point of the exercise — http:// is redirected rather than served.
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          # Managed-CachingOptimized. It honours the origin's Cache-Control, so the split that
+          # deploy.yml already sets on upload carries through unchanged: hashed assets are
+          # immutable for a year, index.html and products.json are must-revalidate.
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          # Managed-SecurityHeadersPolicy — HSTS, X-Content-Type-Options, frame-ancestors etc.
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+
+        # SPA fallback. src/App.jsx routes on window.location.pathname === '/success', which is
+        # where Stripe sends the buyer back after payment, and no such object exists in the
+        # bucket. Without this, that redirect lands on S3's AccessDenied XML.
+        #
+        # 403 rather than only 404: with a private bucket and no s3:ListBucket grant, S3
+        # answers a missing key with AccessDenied, not NoSuchKey. Mapping only 404 would leave
+        # every deep link broken.
+        #
+        # Both are rewritten to 200 — the previous website-endpoint setup served index.html for
+        # /success but with a 404 status, which is wrong for a page that renders successfully.
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+
+        ViewerCertificate:
+          # The default *.cloudfront.net certificate. A custom domain would need an ACM
+          # certificate in us-east-1 plus an Aliases entry; deliberately not done here.
+          CloudFrontDefaultCertificate: true
+
+  # Replaces the bucket's public-read policy with one that admits only this distribution.
+  #
+  # The bucket itself is intentionally not an AWS::S3::Bucket resource here: it already exists,
+  # holds the live site, and adopting it into the stack would put a bucket full of content
+  # behind a stack deletion. Only the policy is owned.
+  #
+  # No circular dependency — the distribution names the bucket by string, and only the policy
+  # refers back to the distribution.
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucketName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${SiteBucketName}/*'
+            Condition:
+              StringEquals:
+                # Scopes the grant to this one distribution. Without it, any CloudFront
+                # distribution in any AWS account could read the bucket.
+                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteDistribution}'
+
 # ─────────────────────────────────────────────
 # Outputs — the API URL is captured by deploy.yml
 # and injected into the Vite build as VITE_CHECKOUT_API_URL.
@@ -159,3 +314,21 @@ Outputs:
     Value: !Sub "https://${CheckoutApi}.execute-api.${AWS::Region}.amazonaws.com/create-checkout"
     Export:
       Name: !Sub "${AWS::StackName}-ApiUrl"
+
+  SiteUrl:
+    Description: >
+      Public HTTPS URL of the site. This is the address to use — the bucket's s3-website
+      endpoint is HTTP-only and, after this stack's bucket policy is applied, no longer
+      readable anonymously at all.
+    Value: !Sub 'https://${SiteDistribution.DomainName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-SiteUrl'
+
+  DistributionId:
+    Description: >
+      CloudFront distribution ID. deploy.yml reads this from the stack rather than from a
+      CLOUDFRONT_DISTRIBUTION_ID secret, so cache invalidation cannot silently target a stale
+      distribution or be skipped because a secret was never set.
+    Value: !Ref SiteDistribution
+    Export:
+      Name: !Sub '${AWS::StackName}-DistributionId'
