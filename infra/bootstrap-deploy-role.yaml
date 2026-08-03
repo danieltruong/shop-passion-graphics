@@ -245,11 +245,24 @@ Resources:
               # ── CloudFront: the distribution that serves the site over HTTPS ──
               # This used to be CreateInvalidation alone, from when the distribution was
               # assumed to be created by hand. infra/template.yaml now owns it, so the role
-              # needs the whole lifecycle — without CreateDistribution the first deploy fails
-              # mid-changeset and rolls back.
+              # needs the whole lifecycle.
+              #
+              # The Create* actions MUST be on '*'. Per the IAM service authorization
+              # reference, cloudfront:CreateDistribution and cloudfront:CreateOriginAccessControl
+              # support no resource-level permissions — their resource-type column is empty,
+              # because the resource does not exist at the time of the call. Scoping them to
+              # distribution/* or origin-access-control/* matches nothing and the call is
+              # denied. That is not hypothetical: it is how the first CloudFront deploy failed,
+              # with "Access denied ... cloudfront:CreateOriginAccessControl" and a rollback.
               - Effect: Allow
                 Action:
                   - cloudfront:CreateDistribution
+                  - cloudfront:CreateOriginAccessControl
+                Resource: '*'
+
+              # Everything that acts on an existing distribution does scope, so it stays scoped.
+              - Effect: Allow
+                Action:
                   - cloudfront:UpdateDistribution
                   - cloudfront:DeleteDistribution
                   - cloudfront:GetDistribution
@@ -262,14 +275,18 @@ Resources:
 
               # Origin Access Control — what lets CloudFront sign its S3 reads, so the bucket
               # needs no public grant.
+              #
+              # On '*' rather than an origin-access-control/* ARN. These actions do support
+              # resource-level permissions, but an OAC holds no data and grants no access by
+              # itself, so the value of scoping it is close to zero — and getting the ARN shape
+              # wrong costs another failed deploy and rollback. Not worth the trade.
               - Effect: Allow
                 Action:
-                  - cloudfront:CreateOriginAccessControl
                   - cloudfront:UpdateOriginAccessControl
                   - cloudfront:DeleteOriginAccessControl
                   - cloudfront:GetOriginAccessControl
                   - cloudfront:GetOriginAccessControlConfig
-                Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*'
+                Resource: '*'
 
               # The cache and response-headers policies the distribution references are
               # AWS-managed and live outside this account, so they have no account-scoped ARN
