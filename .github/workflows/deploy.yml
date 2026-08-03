@@ -59,16 +59,19 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # Fail early and clearly rather than deploying a wildcard-CORS API. AllowedOrigin has no
-      # default in the SAM template, so an unset secret would fail later and less legibly.
+      # Fail early and clearly rather than part-way through a deploy.
+      #
+      # ALLOWED_ORIGIN used to be checked here, because a wildcard-CORS API was the failure
+      # mode of an unset secret. It is no longer a secret at all: the template derives the
+      # allowlist from the CloudFront distribution it creates, so the value cannot be unset,
+      # cannot be `*`, and cannot name an origin that does not exist.
       - name: Verify required secrets
         env:
-          ALLOWED_ORIGIN: ${{ secrets.ALLOWED_ORIGIN }}
           STRIPE_SECRET_ARN: ${{ secrets.STRIPE_SECRET_ARN }}
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
         run: |
           missing=0
-          for var in ALLOWED_ORIGIN STRIPE_SECRET_ARN S3_BUCKET_NAME; do
+          for var in STRIPE_SECRET_ARN S3_BUCKET_NAME; do
             if [ -z "${!var}" ]; then
               echo "❌ Required secret $var is not set"
               missing=1
@@ -108,31 +111,60 @@ jobs:
           set -euo pipefail
           ENV=${{ inputs.environment || 'staging' }}
           sam build --template-file infra/template.yaml
+
+          PARAM_OVERRIDES=(
+            "Stage=${ENV}"
+            "StripeSecretArn=${{ secrets.STRIPE_SECRET_ARN }}"
+            # The stack does not create the site bucket, but it owns the bucket policy that
+            # restricts reads to the CloudFront distribution.
+            "SiteBucketName=${{ secrets.S3_BUCKET_NAME }}"
+          )
+
+          # Optional, and normally unset: CloudFront's own domain is always allowed by the
+          # template. This is only for a custom domain in front of the same distribution.
+          # Omitted rather than passed empty so the template default applies cleanly.
+          CUSTOM_DOMAIN_ORIGINS="${{ secrets.CUSTOM_DOMAIN_ORIGINS }}"
+          if [ -n "$CUSTOM_DOMAIN_ORIGINS" ]; then
+            PARAM_OVERRIDES+=("CustomDomainOrigins=${CUSTOM_DOMAIN_ORIGINS}")
+          fi
+
           sam deploy \
             --config-file infra/samconfig.toml \
             --config-env "${ENV}" \
-            --parameter-overrides \
-              "Stage=${ENV}" \
-              "StripeSecretArn=${{ secrets.STRIPE_SECRET_ARN }}" \
-              "AllowedOrigin=${{ secrets.ALLOWED_ORIGIN }}" \
+            --parameter-overrides "${PARAM_OVERRIDES[@]}" \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
-          CHECKOUT_URL=$(aws cloudformation describe-stacks \
-            --stack-name shop-passion-${ENV} \
-            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
-            --output text \
-            --region ${{ env.AWS_REGION }})
+          stack_output() {
+            aws cloudformation describe-stacks \
+              --stack-name "shop-passion-${ENV}" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" \
+              --output text \
+              --region ${{ env.AWS_REGION }}
+          }
+
+          CHECKOUT_URL=$(stack_output ApiUrl)
+          SITE_URL=$(stack_output SiteUrl)
+          DISTRIBUTION_ID=$(stack_output DistributionId)
 
           # `--output text` prints the literal string "None" when the output is absent, which
-          # would otherwise be baked into the bundle as VITE_CHECKOUT_API_URL="None".
-          if [ -z "$CHECKOUT_URL" ] || [ "$CHECKOUT_URL" = "None" ]; then
-            echo "❌ Stack produced no ApiUrl output — refusing to build against a missing API"
-            exit 1
-          fi
+          # would otherwise be baked into the bundle as VITE_CHECKOUT_API_URL="None" — or, for
+          # the distribution, make the invalidation step target nothing while still passing.
+          for pair in "ApiUrl=${CHECKOUT_URL}" "SiteUrl=${SITE_URL}" "DistributionId=${DISTRIBUTION_ID}"; do
+            key=${pair%%=*}
+            value=${pair#*=}
+            if [ -z "$value" ] || [ "$value" = "None" ]; then
+              echo "❌ Stack produced no ${key} output — refusing to continue"
+              exit 1
+            fi
+          done
 
-          echo "checkout_url=${CHECKOUT_URL}" >> "$GITHUB_OUTPUT"
-          echo "✅ SAM deploy complete — ${CHECKOUT_URL}"
+          {
+            echo "checkout_url=${CHECKOUT_URL}"
+            echo "site_url=${SITE_URL}"
+            echo "distribution_id=${DISTRIBUTION_ID}"
+          } >> "$GITHUB_OUTPUT"
+          echo "✅ SAM deploy complete — API ${CHECKOUT_URL}, site ${SITE_URL}"
 
       - name: Build
         run: yarn build
@@ -165,25 +197,21 @@ jobs:
 
           echo "✅ S3 sync complete"
 
+      # The distribution ID comes from the stack, not from a CLOUDFRONT_DISTRIBUTION_ID secret.
+      # The secret version had a silent-skip branch: an unset secret printed "no CloudFront
+      # configured" and moved on, so a stale index.html could survive a deploy indefinitely
+      # while the job still reported success. There is nothing optional about it now.
       - name: Invalidate CloudFront cache
-        env:
-          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
-            aws cloudfront create-invalidation \
-              --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-              --paths "/index.html" "/products.json"
-            echo "✅ CloudFront invalidation queued"
-          else
-            echo "ℹ️  No CloudFront configured — skipping"
-          fi
+          set -euo pipefail
+          # "/" as well as "/index.html": DefaultRootObject serves index.html at the root, but
+          # CloudFront caches that under the "/" key, so invalidating only "/index.html" leaves
+          # the landing page stale.
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.sam.outputs.distribution_id }}" \
+            --paths "/" "/index.html" "/products.json"
+          echo "✅ CloudFront invalidation queued"
 
       - name: Print deployment URL
-        env:
-          CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
         run: |
-          if [ -n "$CLOUDFRONT_DOMAIN" ]; then
-            echo "🚀 Deployed to: https://$CLOUDFRONT_DOMAIN"
-          else
-            echo "🚀 Deployed to: http://${{ secrets.S3_BUCKET_NAME }}.s3-website.${{ env.AWS_REGION }}.amazonaws.com"
-          fi
+          echo "🚀 Deployed to: ${{ steps.sam.outputs.site_url }}"

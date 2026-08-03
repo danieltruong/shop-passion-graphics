@@ -8,8 +8,11 @@
 # It does four things, all idempotent — re-running is safe:
 #   1. deploys infra/bootstrap-deploy-role.yaml (GitHub OIDC provider + shop-passion-deploy role)
 #   2. stores the Stripe key from .env.local as an SSM SecureString
-#   3. sets AWS_ROLE_ARN, STRIPE_SECRET_ARN and ALLOWED_ORIGIN on the GitHub staging environment
+#   3. sets AWS_ROLE_ARN and STRIPE_SECRET_ARN on the GitHub staging environment
 #   4. prints what it did
+#
+# Re-run this after any change to infra/bootstrap-deploy-role.yaml — the deploy role's policy
+# is not updated by deploy.yml, which assumes the role rather than managing it.
 #
 # It creates nothing outside shop-passion-*, deletes nothing, and never prints the Stripe key.
 
@@ -21,7 +24,15 @@ STACK=shop-passion-deploy-role
 PARAM_NAME=/shop-passion/staging/stripe-secret-key
 GH_REPO=danieltruong/shop-passion-graphics
 GH_ENV=staging
-SITE_ORIGIN='http://shop-passion-graphics-staging.s3-website.ca-central-1.amazonaws.com'
+
+# There is deliberately no SITE_ORIGIN here any more.
+#
+# It used to be set to the bucket's s3-website endpoint and written to an ALLOWED_ORIGIN
+# secret. That endpoint is HTTP-only — no TLS listener at all — so the site could never be
+# reached over https://, and the origin baked into the Lambda was the http:// one. The site is
+# now served through the CloudFront distribution in infra/template.yaml, and the origin
+# allowlist is derived from that distribution's domain inside the stack. Nothing has to know
+# the site's URL before the resource that defines it exists.
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 TEMPLATE="$ROOT/infra/bootstrap-deploy-role.yaml"
@@ -161,15 +172,24 @@ ok "Parameter: $param_arn"
 step "Setting GitHub secrets on the '$GH_ENV' environment"
 gh secret set AWS_ROLE_ARN       --repo "$GH_REPO" --env "$GH_ENV" --body "$role_arn"
 gh secret set STRIPE_SECRET_ARN  --repo "$GH_REPO" --env "$GH_ENV" --body "$param_arn"
-gh secret set ALLOWED_ORIGIN     --repo "$GH_REPO" --env "$GH_ENV" --body "$SITE_ORIGIN"
-ok "AWS_ROLE_ARN, STRIPE_SECRET_ARN, ALLOWED_ORIGIN set"
+ok "AWS_ROLE_ARN, STRIPE_SECRET_ARN set"
+
+# ALLOWED_ORIGIN is no longer read by deploy.yml. A leftover one is inert rather than harmful,
+# but it is misleading to leave a secret lying around that looks like it still controls CORS.
+if gh secret list --repo "$GH_REPO" --env "$GH_ENV" 2>/dev/null | grep -q '^ALLOWED_ORIGIN'; then
+  printf '\033[33m⚠️  A stale ALLOWED_ORIGIN secret exists on the %s environment.\033[0m\n' "$GH_ENV"
+  info "Nothing reads it — the origin allowlist now comes from the CloudFront distribution."
+  info "Remove it with:  gh secret delete ALLOWED_ORIGIN --repo $GH_REPO --env $GH_ENV"
+fi
 
 # ── 7. Summary ────────────────────────────────────────────────────────────────────────────────
 step "Done"
 info "Role            $role_arn"
 info "SSM parameter   $param_arn"
-info "Allowed origin  $SITE_ORIGIN"
+info "Allowed origin  derived from the CloudFront distribution at deploy time"
 printf '\n'
-ok "Staging is provisioned. The next deploy can reach CloudFormation, Lambda and API Gateway."
-info "Nothing has been deployed yet — the app deploy still needs the fixed infra/template.yaml"
-info "to be committed and pushed."
+ok "Staging is provisioned. The next deploy can reach CloudFormation, Lambda, API Gateway,"
+info "CloudFront and the site bucket's policy."
+info "The site's HTTPS URL is the stack's SiteUrl output — deploy.yml prints it at the end of"
+info "the run. The first deploy after adding CloudFront takes several extra minutes while the"
+info "distribution is created."
