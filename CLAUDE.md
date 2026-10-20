@@ -6,9 +6,9 @@ Static frontend on S3/CloudFront; checkout runs as an AWS Lambda behind API Gate
 ## Stack
 
 - React 19 + Vite 8, **plain JSX — no TypeScript**
-- Framer Motion 12 for animation
-- Vitest 4 + Testing Library (jsdom)
-- Stripe 22 (Checkout Sessions, `mode: 'payment'`)
+- Framer Motion 14 for animation
+- Vitest 5 + Testing Library (jsdom)
+- Stripe 23 (Checkout Sessions, `mode: 'payment'`)
 - AWS SAM → Lambda + HTTP API, region `ca-central-1`
 
 ## Commands
@@ -209,8 +209,8 @@ OAuth support either.
 | Screenshot or scrape a **public** JS-heavy page | `browser` | `WebFetch` on a JS-rendered page |
 | Anything pointed at **`localhost`** | the `webapp-testing` skill (Node Playwright, `e2e/*.spec.js`) | `browser` / `chrome-devtools` — both run off-box |
 
-The version-drift rule matters most for `context7`: this repo on React 19, Vite 8, Framer
-Motion 12 and Stripe 22, all newer than reliable recall. Look it up rather than assert it.
+The version-drift rule matters most for `context7`: versions under Stack are newer than
+reliable recall. Look it up rather than assert it.
 
 **Not applicable to this repo** — don't re-evaluate these each session:
 
