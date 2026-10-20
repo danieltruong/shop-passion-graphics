@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main, develop]
-  # Called by deploy.yml so a deploy cannot start until CI has passed.
+  # Called by deploy.yml, which also covers pushes to develop; listing develop
+  # under push too would start a second run in the same concurrency group.
   workflow_call:
 
 concurrency:
