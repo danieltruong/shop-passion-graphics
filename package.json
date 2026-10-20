@@ -10,10 +10,6 @@
   "workspaces": [
     "lambda/create-checkout"
   ],
-  "//resolutions": "netlify-cli 27 installs @opentelemetry/api 1.9.1, but its own @netlify/opentelemetry-utils pins the peer to ~1.8.0 — netlify's halves disagree, and yarn warns on every install. 1.8.0 satisfies both declared ranges (netlify-cli asks for ^1.8.0), so this narrows rather than overrides. Dev-only: no Netlify code ships to production. Drop it once netlify-cli aligns the two.",
-  "resolutions": {
-    "@opentelemetry/api": "1.8.0"
-  },
   "scripts": {
     "dev": "netlify dev",
     "build": "vite build",
@@ -29,30 +25,30 @@
   },
   "dependencies": {
     "framer-motion": "^12.43.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "stripe": "^22.4.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "stripe": "^22.6.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@playwright/test": "^1.62.1",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.0.5",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@playwright/test": "^1.64.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.39.5",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.3",
-    "globals": "^17.8.0",
-    "jsdom": "^30.0.1",
-    "netlify-cli": "^27.0.1",
-    "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "jsdom": "^30.1.3",
+    "netlify-cli": "^27.13.0",
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12"
   }
 }
