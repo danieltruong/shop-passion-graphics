@@ -202,7 +202,6 @@ describe('checkout', () => {
   })
 
   it('refuses to navigate when the response has no url', async () => {
-    // Previously this navigated to the literal string "undefined" — a blank 404.
     global.fetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -243,7 +242,7 @@ describe('checkout', () => {
     global.fetch.mockResolvedValue({ ok: false, status: 404, text: async () => '' })
     renderDrawer()
     await userEvent.click(screen.getByRole('button', { name: /checkout/i }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(/npm run dev/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/yarn dev/i)
   })
 
   it('recovers from a network failure and re-enables the button', async () => {
@@ -264,7 +263,7 @@ describe('checkout', () => {
     renderDrawer()
     await userEvent.click(screen.getByRole('button', { name: /checkout/i }))
     await waitFor(() => expect(hrefSpy).toHaveBeenCalled())
-    // The document is being torn down; re-enabling would let a second session be created.
+    // The page is unloading; re-enabling would let a second session be created.
     expect(screen.getByRole('button', { name: /creating checkout/i })).toBeDisabled()
   })
 })

@@ -42,10 +42,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.js'],
-    // `nmHoistingLimits: workspaces` gives lambda/create-checkout its own copy of stripe, so
-    // checkout-core.mjs and a test file resolve 'stripe' to two different physical modules and
-    // vi.mock('stripe') silently fails to intercept. Collapsing them onto the root copy for the
-    // test run makes the mock apply; nothing but the mock is ever exercised.
+    // nmHoistingLimits gives lambda/create-checkout its own stripe, so vi.mock('stripe') would
+    // miss checkout-core.mjs's import; pointing both at the root copy makes the mock apply.
     alias: {
       stripe: resolve(import.meta.dirname, 'node_modules/stripe'),
     },

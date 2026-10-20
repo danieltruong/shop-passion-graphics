@@ -4,11 +4,8 @@
 import { fileURLToPath } from 'node:url'
 import { handleCheckout } from './checkout-core.mjs'
 
-/**
- * products.json is copied into this directory by `yarn sync:catalog` before `sam build`,
- * so it ships inside the function bundle. Resolved relative to this module rather than cwd,
- * which Lambda does not guarantee.
- */
+// Copied here by `yarn sync:catalog` before `sam build`; resolved from this module, not cwd,
+// which Lambda does not guarantee.
 const CATALOG_PATH = fileURLToPath(new URL('./products.json', import.meta.url))
 
 /** v1 (REST) exposes event.httpMethod; v2 (HTTP API) exposes requestContext.http.method. */
