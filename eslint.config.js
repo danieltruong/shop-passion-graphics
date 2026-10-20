@@ -10,7 +10,6 @@ export default defineConfig([
   // shared core. Excluding it meant `yarn lint` passing said nothing about deployed code.
   globalIgnores([
     'dist',
-    '**/.netlify',
     '**/.aws-sam',
     // The vendored yarn release — a 3.7 MB generated bundle, not source.
     '.yarn',
@@ -24,9 +23,9 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.node } },
   },
 
-  // Serverless handlers — Netlify (dev) and Lambda (production)
+  // Node-side checkout code: the Lambda (production) and the Vite dev middleware
   {
-    files: ['netlify/functions/**/*.js', 'lambda/**/*.mjs'],
+    files: ['lambda/**/*.mjs', 'vite.config.js'],
     languageOptions: { globals: { ...globals.node } },
   },
 

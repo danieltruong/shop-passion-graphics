@@ -49,8 +49,8 @@ jobs:
       - name: Build
         run: yarn build
         env:
-          # Intentionally empty: CartDrawer falls back to the local Netlify function URL and
-          # the build succeeds. The real URL is injected only by deploy.yml.
+          # Intentionally empty: CartDrawer falls back to /api/create-checkout (the Vite dev
+          # middleware) and the build succeeds. The real URL is injected only by deploy.yml.
           VITE_CHECKOUT_API_URL: ''
 
       - name: Verify build output

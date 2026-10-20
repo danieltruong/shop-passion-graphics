@@ -1,45 +1,13 @@
-/**
- * CartDrawer — slide-in modal panel showing cart contents and the checkout button.
- *
- * Flow:
- *   1. User reviews items + adjusts quantities.
- *   2. User clicks "Checkout via Stripe".
- *   3. We POST the cart (priceId + qty only — never client-side prices) to the checkout
- *      function, which creates a Stripe Checkout Session server-side.
- *   4. We redirect to the Stripe-hosted checkout URL returned by the function.
- *   5. Stripe handles payment, then redirects to /success or / (cancel).
- *
- * Accessibility: this is a real modal dialog. It is unmounted when closed — an always-rendered
- * `aria-modal="true"` panel is announced on every page load and leaves its controls in the tab
- * order off-screen. While open it traps focus; on close App returns focus to the cart button.
- *
- * Props:
- *   cart        [{ product, quantity }]        — current cart items
- *   isOpen      boolean                        — drawer visibility
- *   onClose     () => void                     — close the drawer
- *   onUpdateQty (key: string, qty: number)     — set qty; qty=0 removes the line
- *   onClear     () => void                     — empty the cart
- *   error       string | null                  — cart-level error raised by App
- */
+// Unmounted when closed: an always-rendered aria-modal panel is announced on every page load
+// and leaves its controls in the tab order off-screen.
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { formatPrice } from '../utils/formatPrice'
 import { lineKey, subtotal as cartSubtotal, cartCurrency, MAX_QTY } from '../utils/cart'
 
-/**
- * Checkout endpoint:
- *   - Production/staging: VITE_CHECKOUT_API_URL set at build time (API Gateway → Lambda)
- *   - Local dev:          falls back to the Netlify function served by `netlify dev`
- *
- * `||`, not `??`: Vite substitutes a declared-but-empty env var as `""`, which `??` passes
- * through. That produced `fetch("")` — a POST to the current page returning index.html with
- * HTTP 200, so the empty-body guard below never fired and the user saw a raw JSON parse error.
- *
- * VITE_CHECKOUT_API_URL is a *public* URL — not a secret. The secret key lives exclusively in
- * the Lambda/Netlify function environment, never in this bundle.
- */
-const CHECKOUT_URL =
-  import.meta.env.VITE_CHECKOUT_API_URL || '/.netlify/functions/create-checkout'
+// Unset locally, so dev hits the Vite checkout middleware. `||`, not `??`: Vite turns a
+// declared-but-empty env var into "", and fetch("") would POST to the page itself.
+const CHECKOUT_URL = import.meta.env.VITE_CHECKOUT_API_URL || '/api/create-checkout'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -89,13 +57,7 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
   const subtotal = cartSubtotal(cart)
   const currency = cartCurrency(cart)
 
-  /**
-   * Creates a Stripe Checkout Session via the serverless function and redirects the browser
-   * to Stripe's hosted checkout page.
-   *
-   * We send only priceId + quantity — never client-provided prices. Actual amounts are
-   * authoritative on Stripe's side.
-   */
+  // Sends only priceId + quantity, never prices: amounts come from Stripe, not the client.
   async function handleCheckout() {
     setLoading(true)
     setCheckoutError(null)
@@ -111,12 +73,12 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
         }),
       })
 
-      // Guard against an empty body (e.g. a 404 from Vite on :5173 instead of netlify dev on :8888)
+      // Empty body, e.g. the 404 from `vite preview`, which has no checkout middleware
       const text = await res.text()
       if (!text) {
         throw new Error(
           res.status === 404
-            ? 'Checkout API not found. Make sure you started the app with `npm run dev`.'
+            ? 'Checkout API not found. Make sure you started the app with `yarn dev`.'
             : `Server returned empty response (HTTP ${res.status})`,
         )
       }
@@ -132,14 +94,12 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
         throw new Error(data.error ?? 'Checkout failed. Please try again.')
       }
 
-      // Only ever navigate to Stripe. A malformed 200 previously sent the browser to the
-      // literal string "undefined" — a blank 404 with the cart apparently gone.
+      // Only ever navigate to Stripe; a malformed 200 would otherwise load the URL "undefined".
       if (typeof data.url !== 'string' || !/^https:\/\/[^/]*\bstripe\.com\//.test(data.url)) {
         throw new Error('Checkout returned an invalid redirect. Please try again.')
       }
 
-      // Navigation begins; deliberately do not clear `loading` afterwards — the document is
-      // being torn down and the button should stay disabled until it is.
+      // Keep `loading` set: the button must stay disabled while the page unloads.
       window.location.href = data.url
     } catch (err) {
       setCheckoutError(err.message)
@@ -184,8 +144,8 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
               </button>
             </div>
 
-            {/* One status region for the whole dialog. Per-item live regions were created at
-                the moment their item was added, so the first change often went unannounced. */}
+            {/* One status region for the whole dialog: a per-item live region created with its
+                item misses that item's first change. */}
             <p className="visually-hidden" role="status">
               {cart.length === 0
                 ? 'Cart is empty'
@@ -198,10 +158,8 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
               </p>
             ) : (
               <>
-                {/*
-                  role="list" is redundant per spec but load-bearing in practice: Safari/VoiceOver
-                  strips list semantics from a <ul> with list-style: none, which .cart-items sets.
-                */}
+                {/* role="list" is redundant per spec, but Safari/VoiceOver strips list semantics
+                    from a <ul> with list-style: none, which .cart-items sets. */}
                 {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
                 <ul className="cart-items" role="list">
                   {cart.map(({ product, quantity }) => {
