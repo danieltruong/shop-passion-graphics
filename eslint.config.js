@@ -11,8 +11,8 @@ export default defineConfig([
   // shared core. Excluding it meant `yarn lint` passing said nothing about deployed code.
   globalIgnores([
     'dist',
-    '.netlify',
-    '.aws-sam',
+    '**/.netlify',
+    '**/.aws-sam',
     // The vendored yarn release — a 3.7 MB generated bundle, not source.
     '.yarn',
     'lambda/create-checkout/node_modules',
