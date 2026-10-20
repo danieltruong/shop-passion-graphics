@@ -1,9 +1,9 @@
 name: Deploy
 
 on:
-  # Staging auto-deploys on every push to develop
+  # Staging deploys on every push to main
   push:
-    branches: [develop]
+    branches: [main]
   # Production deploys manually
   workflow_dispatch:
     inputs:
