@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cart drawer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#000080}
+.ph{background:repeating-linear-gradient(45deg,#2a2a50 0 10px,#232345 10px 20px)}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 900px; overflow: hidden; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; color: #000; background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%)">
+
+<div aria-hidden="true" style="position: absolute; inset: 0">
+<div style="height: 110px; border-bottom: 4px ridge #c0c0c0; background: rgba(20,0,40,0.95)"></div>
+<div style="max-width: 1200px; margin: 48px auto 0; padding: 0 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+<div class="ph" style="height: 340px; border: 4px outset #ffd700"></div>
+</div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.62)"></div>
+
+<aside role="dialog" aria-modal="true" aria-labelledby="cart-title" class="bevel" style="position: absolute; top: 0; right: 0; bottom: 0; width: 460px; box-sizing: border-box; background: #c0c0c0; padding: 3px; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 6px 8px">
+<h2 id="cart-title" style="margin: 0; font-size: 16px; font-weight: 700">Your cart (2 items)</h2>
+<button aria-label="Close cart" class="bevel" style="width: 44px; height: 36px; background: #c0c0c0; color: #000; font: 700 18px Tahoma, sans-serif; cursor: pointer">×</button>
+</div>
+
+<div style="padding: 16px 16px 0">
+<div style="font-size: 14px; margin-bottom: 8px">You're <strong>$[XX]</strong> away from <strong>free shipping</strong>!</div>
+<div class="sunken" role="progressbar" aria-label="Progress to free shipping" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="height: 24px; background: #fff; padding: 2px; display: flex; gap: 2px; box-sizing: border-box">
+<span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span><span style="width: 14px; background: #000080"></span>
+</div>
+</div>
+
+<ul style="list-style: none; margin: 16px; padding: 0; flex: 1; display: flex; flex-direction: column; gap: 12px">
+<li class="sunken" style="display: flex; gap: 12px; padding: 12px; background: #fff">
+<div class="ph" style="flex: none; width: 88px; height: 88px; border: 2px solid #404040"></div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><a href="Product.dc.html" style="font-weight: 700; font-size: 15px">[Product name]</a><span style="font-weight: 700">$[00.00]</span></div>
+<div style="font-size: 13px; color: #444">[Size]: [M]</div>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div role="group" aria-label="Quantity" style="display: flex; align-items: center">
+<button aria-label="Decrease quantity" class="bevel" style="width: 36px; height: 36px; background: #c0c0c0; font: 700 18px Tahoma, sans-serif">−</button>
+<span class="sunken" style="width: 40px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700">1</span>
+<button aria-label="Increase quantity" class="bevel" style="width: 36px; height: 36px; background: #c0c0c0; font: 700 18px Tahoma, sans-serif">+</button>
+</div>
+<button style="min-height: 36px; background: none; border: 0; color: #000080; text-decoration: underline; font: 13px Tahoma, sans-serif; cursor: pointer">Remove</button>
+</div>
+</div>
+</li>
+<li class="sunken" style="display: flex; gap: 12px; padding: 12px; background: #fff">
+<div class="ph" style="flex: none; width: 88px; height: 88px; border: 2px solid #404040"></div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><a href="Product.dc.html" style="font-weight: 700; font-size: 15px">[Product name]</a><span style="font-weight: 700">$[00.00]</span></div>
+<div style="font-size: 13px; color: #444">One size</div>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div role="group" aria-label="Quantity" style="display: flex; align-items: center">
+<button aria-label="Decrease quantity" class="bevel" style="width: 36px; height: 36px; background: #c0c0c0; font: 700 18px Tahoma, sans-serif">−</button>
+<span class="sunken" style="width: 40px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700">2</span>
+<button aria-label="Increase quantity" class="bevel" style="width: 36px; height: 36px; background: #c0c0c0; font: 700 18px Tahoma, sans-serif">+</button>
+</div>
+<button style="min-height: 36px; background: none; border: 0; color: #000080; text-decoration: underline; font: 13px Tahoma, sans-serif; cursor: pointer">Remove</button>
+</div>
+</div>
+</li>
+</ul>
+
+<div style="margin: 0 16px 16px; padding-top: 14px; border-top: 2px groove #ffffff; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; font-size: 15px"><span>Subtotal</span><strong>$[00.00]</strong></div>
+<div style="display: flex; justify-content: space-between; font-size: 14px; color: #333"><span>Shipping &amp; taxes</span><span>Calculated at checkout</span></div>
+<a href="ThankYou.dc.html" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 58px; font-family: Impact, Anton, sans-serif; font-size: 22px; letter-spacing: 2px; color: #000; text-decoration: none; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 4px outset #ffd700; box-shadow: 3px 3px 0 rgba(0,0,0,0.45)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>CHECKOUT SECURELY</a>
+<div style="text-align: center; font-size: 13px; color: #333">You'll finish paying on Stripe's secure page.</div>
+<a href="Main.dc.html" style="align-self: center; display: inline-flex; align-items: center; min-height: 44px; font-size: 14px">Keep shopping</a>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

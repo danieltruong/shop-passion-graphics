@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mobile product</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}
+.rainbow{background:linear-gradient(90deg,#ff5c5c,#ff9a1f,#ffd700,#39ff14,#00bfff,#b98cff,#ff69b4,#ff5c5c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.ph{background:repeating-linear-gradient(45deg,#2a2a50 0 10px,#232345 10px 20px)}
+.burst{clip-path:polygon(50% 0%,61% 15%,79% 9%,79% 27%,97% 32%,87% 48%,97% 65%,79% 70%,79% 89%,61% 84%,50% 100%,39% 84%,21% 89%,21% 70%,3% 65%,13% 48%,3% 32%,21% 27%,21% 9%,39% 15%)}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1500px; overflow: hidden; box-sizing: border-box; color: #fff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%)">
+
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-bottom: 4px ridge #c0c0c0; background: rgba(20,0,40,0.95)">
+<a href="MobileHome.dc.html" aria-label="Back to shop" class="bevel" style="width: 44px; height: 44px; box-sizing: border-box; background: #c0c0c0; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+</a>
+<span class="rainbow" style="font-family: Papyrus, 'Segoe Print', fantasy; font-size: 19px; font-weight: 700">shop.passion.graphics</span>
+<a href="Cart.dc.html" aria-label="Cart, 2 items" style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 3px outset #ffd700; box-sizing: border-box">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h3l2.5 12h11L21 7H6.5"/><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/></svg>
+<span style="position: absolute; top: -9px; right: -9px; min-width: 20px; height: 20px; border-radius: 10px; background: #ff2d95; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+</a>
+</header>
+
+<div class="ph" style="position: relative; width: 390px; height: 390px; border-bottom: 4px ridge #c0c0c0; display: flex; align-items: center; justify-content: center; color: #b8b8dd; font-size: 13px; letter-spacing: 2px">SWIPE FOR PHOTOS
+<div style="position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 8px" aria-hidden="true">
+<span style="width: 10px; height: 10px; background: #ffd700; border: 1px solid #000"></span>
+<span style="width: 10px; height: 10px; background: #555577; border: 1px solid #000"></span>
+<span style="width: 10px; height: 10px; background: #555577; border: 1px solid #000"></span>
+<span style="width: 10px; height: 10px; background: #555577; border: 1px solid #000"></span>
+</div>
+<span class="burst" style="position: absolute; top: 14px; left: 14px; width: 70px; height: 70px; background: #ff2d95; display: flex; align-items: center; justify-content: center; color: #fff; font-family: Impact, Anton, sans-serif; font-size: 16px; transform: rotate(-12deg)">NEW!</span>
+</div>
+
+<section style="padding: 20px 16px 120px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="margin: 0; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 34px; line-height: 1.1; color: #ffd700">[Product name]</h1>
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="transform: rotate(-3deg); background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; font-family: Impact, Anton, sans-serif; font-size: 24px; padding: 4px 12px; border: 3px outset #ffd700">$[00.00]</span>
+<span style="font-size: 14px; color: #8dff7a">In stock</span>
+</div>
+<p style="margin: 0; font-size: 16px; line-height: 1.55; color: #dcdcf2">[Two or three sentences describing the product.]</p>
+<div>
+<div style="font-weight: 700; font-size: 15px; margin-bottom: 8px">[Size]: <span style="color: #ffd700">[M]</span></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<button class="bevel" style="min-height: 48px; background: #c0c0c0; color: #000; font: 700 15px Tahoma, sans-serif">[S]</button>
+<button class="sunken" style="min-height: 48px; background: #ffd700; color: #000; font: 700 15px Tahoma, sans-serif">[M]</button>
+<button class="bevel" style="min-height: 48px; background: #c0c0c0; color: #000; font: 700 15px Tahoma, sans-serif">[L]</button>
+<button class="bevel" style="min-height: 48px; background: #c0c0c0; color: #000; font: 700 15px Tahoma, sans-serif">[XL]</button>
+</div>
+</div>
+<div class="bevel" style="background: #c0c0c0; color: #000; padding: 3px; display: flex; flex-direction: column; gap: 3px">
+<div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px">Details <span aria-hidden="true">▾</span></div>
+<div style="padding: 12px; font-size: 14px; line-height: 1.55">[Size, materials and care.] Handmade, so yours may vary slightly from the photos.</div>
+<div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px">Shipping &amp; returns <span aria-hidden="true">▸</span></div>
+<div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px">About the design <span aria-hidden="true">▸</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c9c9e6">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9c9e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+Secure checkout by Stripe
+</div>
+<h2 style="margin: 12px 0 0; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 24px; color: #ffd700">You might also like</h2>
+<div style="display: flex; gap: 12px; overflow-x: auto">
+<div class="ph" style="flex: none; width: 150px; height: 150px; border: 3px outset #ffd700"></div>
+<div class="ph" style="flex: none; width: 150px; height: 150px; border: 3px outset #ffd700"></div>
+<div class="ph" style="flex: none; width: 150px; height: 150px; border: 3px outset #ffd700"></div>
+</div>
+</section>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; align-items: center; padding: 12px 14px 22px; background: #c0c0c0; border-top: 3px solid #ffffff; box-shadow: 0 -6px 18px rgba(0,0,0,0.5); color: #000">
+<div>
+<div style="font-size: 12px">[Product name] · [M]</div>
+<div style="font-family: Impact, Anton, sans-serif; font-size: 22px">$[00.00]</div>
+</div>
+<a href="Cart.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 52px; font-family: Impact, Anton, sans-serif; font-size: 19px; letter-spacing: 1.5px; color: #000; text-decoration: none; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 3px outset #ffd700">ADD TO CART</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shipping and returns</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}a:hover{color:#ffd700}
+.rainbow{background:linear-gradient(90deg,#ff5c5c,#ff9a1f,#ffd700,#39ff14,#00bfff,#b98cff,#ff69b4,#ff5c5c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+</style>
+</helmet>
+<div style="background: radial-gradient(ellipse at 15% 20%, rgba(90,0,150,0.35) 0%, transparent 45%), linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%); color: #ffffff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; min-height: 100vh">
+
+<dc-import name="SiteHeader" active="shipping" cart-count="2" hint-size="100%,150px"></dc-import>
+
+<main style="max-width: 1000px; margin: 0 auto; padding: 56px 24px 80px; display: flex; flex-direction: column; gap: 48px">
+<div style="text-align: center">
+<h1 class="rainbow" style="margin: 0 0 10px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 56px; font-weight: 700">Shipping &amp; returns</h1>
+<p style="margin: 0; font-size: 17px; color: #d6d6ee">Every order is packed by hand and ships from BC, Canada within 3–5 business days.</p>
+</div>
+
+<section aria-labelledby="rates-title" class="bevel" style="background: #c0c0c0; color: #000; padding: 3px">
+<div style="background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 6px 8px; font-size: 15px; font-weight: 700"><h2 id="rates-title" style="margin: 0; font-size: 15px">Shipping rates</h2></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div class="sunken" style="background: #fff; overflow-x: auto">
+<table style="width: 100%; min-width: 560px; border-collapse: collapse; font-size: 15px">
+<thead>
+<tr style="background: #dcdcdc; text-align: left">
+<th scope="col" style="padding: 12px 14px; border-bottom: 2px solid #808080">Destination</th>
+<th scope="col" style="padding: 12px 14px; border-bottom: 2px solid #808080">Method</th>
+<th scope="col" style="padding: 12px 14px; border-bottom: 2px solid #808080">Delivery time</th>
+<th scope="col" style="padding: 12px 14px; border-bottom: 2px solid #808080">Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">Canada</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">Tracked mail</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">[X–Y] business days</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">$[00] · free over $[XX]</td></tr>
+<tr><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">United States</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">Tracked mail</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">[X–Y] business days</td><td style="padding: 12px 14px; border-bottom: 1px solid #c0c0c0">$[00]</td></tr>
+<tr><td style="padding: 12px 14px">Everywhere else</td><td style="padding: 12px 14px">Not available yet</td><td style="padding: 12px 14px">—</td><td style="padding: 12px 14px"><a href="mailto:[email]" style="color: #000080">Email us</a></td></tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.55">Shipping is calculated at checkout. US orders may owe import duties or fees on delivery, which are paid by the buyer.</p>
+</div>
+</section>
+
+<section aria-labelledby="returns-title">
+<h2 id="returns-title" style="margin: 0 0 8px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 38px; color: #ffd700">Returns</h2>
+<p style="margin: 0 0 22px; font-size: 17px; line-height: 1.6; color: #e2e2f5">Changed your mind? Unused items in their original condition can be returned within 14 days of delivery. Custom, personalized and final-sale items can't be returned.</p>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px">
+<li style="padding: 20px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 30px; color: #ffd700">01</span>
+<strong style="font-size: 17px">Email us</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">Send your order number to [your email] within 14 days of delivery.</span>
+</li>
+<li style="padding: 20px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 30px; color: #ffd700">02</span>
+<strong style="font-size: 17px">Send it back</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">We'll reply with the return address. Return shipping is on you, unless we made a mistake.</span>
+</li>
+<li style="padding: 20px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 30px; color: #ffd700">03</span>
+<strong style="font-size: 17px">Get refunded</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">Once it arrives, we refund your original payment method within 5 business days. Your bank may take a few more days to show it.</span>
+</li>
+</ol>
+</section>
+
+<section aria-labelledby="damaged-title" class="bevel" style="background: #c0c0c0; color: #000; padding: 3px">
+<div style="display: flex; align-items: center; gap: 8px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 6px 8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>
+<h2 id="damaged-title" style="margin: 0; font-size: 15px">Damaged or lost order</h2>
+</div>
+<p style="margin: 0; padding: 18px; font-size: 15px; line-height: 1.6">If something arrives damaged or never shows up, email <a href="mailto:[email]" style="color: #000080">[your email]</a> with your order number (and a photo, if it's damaged) within 7 days of delivery. We'll send a replacement or a full refund, and you won't need to send anything back.</p>
+</section>
+</main>
+
+<dc-import name="SiteFooter" hint-size="100%,400px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1750}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Product detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}a:hover{color:#ffd700}
+.ph{background:repeating-linear-gradient(45deg,#2a2a50 0 12px,#232345 12px 24px)}
+.burst{clip-path:polygon(50% 0%,61% 15%,79% 9%,79% 27%,97% 32%,87% 48%,97% 65%,79% 70%,79% 89%,61% 84%,50% 100%,39% 84%,21% 89%,21% 70%,3% 65%,13% 48%,3% 32%,21% 27%,21% 9%,39% 15%)}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+details>summary{cursor:pointer;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details[open]>summary .chev{transform:rotate(90deg)}
+.card-name{color:#fff;text-decoration:none}.card-name:hover{color:#ffd700;text-decoration:underline wavy}
+</style>
+</helmet>
+<div style="background: radial-gradient(ellipse at 80% 15%, rgba(0,40,140,0.4) 0%, transparent 45%), linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%); color: #ffffff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; min-height: 100vh">
+
+<dc-import name="SiteHeader" active="shop" cart-count="{{cartCount}}" hint-size="100%,150px"></dc-import>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 24px 24px 72px">
+
+<nav aria-label="Breadcrumb" style="font-size: 14px; color: #c9c9e6; margin-bottom: 24px">
+<a href="Main.dc.html">Home</a> <span aria-hidden="true">›</span> <a href="Main.dc.html">[Category]</a> <span aria-hidden="true">›</span> <span aria-current="page">[Product name]</span>
+</nav>
+
+<div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
+
+<section aria-label="Product photos" style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="ph" style="position: relative; aspect-ratio: 1 / 1; border: 4px outset #ffd700; display: flex; align-items: center; justify-content: center; color: #b8b8dd; font-size: 15px; letter-spacing: 2px">PHOTO {{photoNumber}} OF 4
+<div class="burst" style="position: absolute; top: -20px; left: -20px; width: 96px; height: 96px; background: #ff2d95; display: flex; align-items: center; justify-content: center; color: #fff; font-family: Impact, Anton, sans-serif; font-size: 20px; transform: rotate(-12deg)">NEW!</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{thumbs}}" as="t" hint-placeholder-count="4">
+<button aria-label="{{t.label}}" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" class="ph" style="{{t.style}}"></button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="product-title" style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h1 id="product-title" style="margin: 0; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 46px; line-height: 1.1; color: #ffd700; text-shadow: 2px 2px 0 rgba(0,0,0,0.8)">[Product name]</h1>
+<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+<span style="transform: rotate(-3deg); background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; font-family: Impact, Anton, sans-serif; font-size: 30px; padding: 6px 16px; border: 3px outset #ffd700; box-shadow: 4px 4px 0 rgba(0,0,0,0.5)">$[00.00] CAD</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: #8dff7a">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8dff7a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>In stock, ships in 3–5 business days</span>
+</div>
+</div>
+
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #dcdcf2">[Two or three sentences describing the product: what it is and what it's made of.]</p>
+
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="padding: 0; margin-bottom: 10px; font-weight: 700; font-size: 15px">[Option name, e.g. Size]: <span style="color: #ffd700">{{selectedOption}}</span></legend>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{options}}" as="o" hint-placeholder-count="4">
+<button aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button>
+</sc-for>
+</div>
+</fieldset>
+
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch">
+<div style="display: flex; align-items: center; background: #c0c0c0; color: #000" class="bevel" role="group" aria-label="Quantity">
+<button onClick="{{dec}}" aria-label="Decrease quantity" class="bevel" style="width: 48px; height: 54px; background: #c0c0c0; color: #000; font: 700 22px Tahoma, sans-serif; cursor: pointer">−</button>
+<span aria-live="polite" class="sunken" style="min-width: 52px; height: 50px; display: flex; align-items: center; justify-content: center; background: #fff; font-size: 18px; font-weight: 700">{{qty}}</span>
+<button onClick="{{inc}}" aria-label="Increase quantity" class="bevel" style="width: 48px; height: 54px; background: #c0c0c0; color: #000; font: 700 22px Tahoma, sans-serif; cursor: pointer">+</button>
+</div>
+<a href="Cart.dc.html" style="flex: 1 1 220px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 58px; font-family: Impact, Anton, sans-serif; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; color: #000; text-decoration: none; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 4px outset #ffd700; box-shadow: 4px 4px 0 rgba(0,0,0,0.55)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h3l2.5 12h11L21 7H6.5"/><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/></svg>Add to cart</a>
+</div>
+
+<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #c9c9e6">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9c9e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+Secure checkout by Stripe · Free shipping in Canada over $[XX]
+</div>
+
+<div class="bevel" style="background: #c0c0c0; color: #000; padding: 3px; display: flex; flex-direction: column; gap: 3px">
+<details open style="background: #c0c0c0">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Details</summary>
+<div style="padding: 14px 16px; font-size: 15px; line-height: 1.6">[Size, materials and care for this piece.] Because each one is made by hand, yours may vary slightly from the photos.</div>
+</details>
+<details style="background: #c0c0c0">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Shipping &amp; returns</summary>
+<div style="padding: 14px 16px; font-size: 15px; line-height: 1.6">Ships from BC, Canada in 3–5 business days. Unused items can be returned within 14 days of delivery; custom and personalized pieces are final sale. <a href="Shipping.dc.html" style="color: #000080">Full policy</a></div>
+</details>
+<details style="background: #c0c0c0">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>About the design</summary>
+<div style="padding: 14px 16px; font-size: 15px; line-height: 1.6">[What inspired this piece, in a sentence or two.]</div>
+</details>
+</div>
+</section>
+</div>
+
+<section aria-labelledby="also-title" style="margin-top: 72px">
+<h2 id="also-title" style="margin: 0 0 24px; text-align: center; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 36px; color: #ffd700">You might also like</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px">
+<sc-for list="{{related}}" as="r" hint-placeholder-count="4">
+<article style="display: flex; flex-direction: column; background: rgba(30,30,60,0.92); border: 4px outset #ffd700">
+<div class="ph" style="position: relative; aspect-ratio: 1 / 1; border-bottom: 4px ridge #c0c0c0; display: flex; align-items: center; justify-content: center; color: #9d9dc8; font-size: 12px; letter-spacing: 2px">PHOTO
+<span style="position: absolute; top: 10px; right: 10px; transform: rotate(5deg); background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; font-family: Impact, Anton, sans-serif; font-size: 18px; padding: 4px 10px; border: 3px outset #ffd700">{{r.price}}</span>
+</div>
+<div style="padding: 12px 14px 16px"><a href="Product.dc.html" class="card-name" style="font-weight: 700; font-size: 16px">{{r.name}}</a></div>
+</article>
+</sc-for>
+</div>
+</section>
+</main>
+
+<dc-import name="SiteFooter" hint-size="100%,400px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"cartCount":{"editor":"int","default":2,"min":0,"max":99},"$preview":{"width":1280,"height":2050}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { photo: 0, option: 1, qty: 1 };
+  }
+  renderVals() {
+    const { photo, option, qty } = this.state;
+    const thumbs = [0, 1, 2, 3].map((i) => ({
+      label: 'Show photo ' + (i + 1),
+      pressed: i === photo ? 'true' : 'false',
+      pick: () => this.setState({ photo: i }),
+      style: 'aspect-ratio: 1 / 1; padding: 0; cursor: pointer; min-height: 44px; ' + (i === photo
+        ? 'border: 4px solid #ffd700; box-shadow: 0 0 0 2px #000, 0 0 14px rgba(255,215,0,0.6);'
+        : 'border: 3px ridge #c0c0c0; opacity: 0.75;')
+    }));
+    const labels = ['[S]', '[M]', '[L]', '[XL]'];
+    const options = labels.map((label, i) => ({
+      label,
+      pressed: i === option ? 'true' : 'false',
+      pick: () => this.setState({ option: i }),
+      style: 'min-width: 64px; min-height: 48px; padding: 0 16px; font: 700 16px Tahoma, Verdana, sans-serif; color: #000; cursor: pointer; border: 2px solid; ' + (i === option
+        ? 'background: #ffd700; border-color: #404040 #ffffff #ffffff #404040; box-shadow: inset 2px 2px #b38f00;'
+        : 'background: #c0c0c0; border-color: #ffffff #404040 #404040 #ffffff;')
+    }));
+    return {
+      thumbs,
+      options,
+      selectedOption: labels[option],
+      photoNumber: photo + 1,
+      qty,
+      dec: () => this.setState({ qty: Math.max(1, qty - 1) }),
+      inc: () => this.setState({ qty: Math.min(99, qty + 1) }),
+      related: [
+        { name: '[Related product]', price: '$[00]' },
+        { name: '[Related product]', price: '$[00]' },
+        { name: '[Related product]', price: '$[00]' },
+        { name: '[Related product]', price: '$[00]' }
+      ],
+      cartCount: this.props.cartCount ?? 2
+    };
+  }
+}
+</script>
+</body>
+</html>

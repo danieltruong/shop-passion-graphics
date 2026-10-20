@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>About the shop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}a:hover{color:#ffd700}
+.rainbow{background:linear-gradient(90deg,#ff5c5c,#ff9a1f,#ffd700,#39ff14,#00bfff,#b98cff,#ff69b4,#ff5c5c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.ph{background:repeating-linear-gradient(45deg,#2a2a50 0 12px,#232345 12px 24px)}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+</style>
+</helmet>
+<div style="background: radial-gradient(ellipse at 15% 20%, rgba(90,0,150,0.35) 0%, transparent 45%), linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%); color: #ffffff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; min-height: 100vh">
+
+<dc-import name="SiteHeader" active="about" cart-count="2" hint-size="100%,150px"></dc-import>
+
+<main style="max-width: 1100px; margin: 0 auto; padding: 64px 24px 80px; display: flex; flex-direction: column; gap: 64px">
+
+<section aria-labelledby="about-title" style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+<div class="bevel" style="flex: 1 1 360px; min-width: 0; background: #c0c0c0; color: #000; padding: 3px">
+<div style="background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 5px 8px; font-size: 14px; font-weight: 700">me.jpg</div>
+<div class="ph sunken" style="margin: 10px; aspect-ratio: 4 / 5; display: flex; align-items: center; justify-content: center; color: #b8b8dd; font-size: 14px; letter-spacing: 2px">PHOTO OF YOUR WORKSPACE</div>
+</div>
+<div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+<h1 id="about-title" class="rainbow" style="margin: 0; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 56px; line-height: 1.1; font-weight: 700">About the shop</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: #e2e2f5">We're [your names], and this is our very small arts and crafts shop, run out of [your city], BC.</p>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: #e2e2f5">We make everything ourselves, by hand and in small batches. That means no two pieces are exactly alike, and when something sells out it might take a little while to come back.</p>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: #e2e2f5">And yes, the website looks like 1998 on purpose. Graphic design is our passion.</p>
+</div>
+</section>
+
+<section aria-labelledby="how-title">
+<h2 id="how-title" style="margin: 0 0 24px; text-align: center; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 38px; color: #ffd700">How it's made</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px">
+<li style="padding: 22px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 34px; color: #ffd700">01</span>
+<strong style="font-size: 18px">Designed</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">Each piece starts as a sketch and gets reworked until it feels right.</span>
+</li>
+<li style="padding: 22px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 34px; color: #ffd700">02</span>
+<strong style="font-size: 18px">Made by hand</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">Made a few at a time, so small differences between pieces are normal.</span>
+</li>
+<li style="padding: 22px; background: rgba(30,30,60,0.9); border: 4px outset #ffd700; display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 34px; color: #ffd700">03</span>
+<strong style="font-size: 18px">Packed &amp; shipped</strong>
+<span style="font-size: 15px; line-height: 1.55; color: #d6d6ee">Packed by hand and shipped within 3–5 business days.</span>
+</li>
+</ol>
+</section>
+
+<section aria-labelledby="say-hi" class="bevel" style="background: #c0c0c0; color: #000; padding: 3px">
+<div style="background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 5px 8px; font-size: 14px; font-weight: 700">Contact</div>
+<div style="padding: 22px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+<div>
+<h2 id="say-hi" style="margin: 0 0 6px; font-size: 20px">Questions, custom orders, wholesale?</h2>
+<p style="margin: 0; font-size: 15px">Email <a href="mailto:[email]" style="color: #000080">[your email]</a> and we'll get back to you within 2 business days.</p>
+</div>
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; font-family: Impact, Anton, sans-serif; font-size: 18px; letter-spacing: 1.5px; color: #000; text-decoration: none; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 3px outset #ffd700; box-shadow: 3px 3px 0 rgba(0,0,0,0.45)">SHOP NOW</a>
+</div>
+</section>
+</main>
+
+<dc-import name="SiteFooter" hint-size="100%,400px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1650}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

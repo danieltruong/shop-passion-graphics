@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Site footer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<footer style="font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; color: #ffffff; background: linear-gradient(0deg, rgba(20,0,40,0.98) 0%, rgba(13,13,26,0.95) 100%); border-top: 4px ridge #c0c0c0">
+<div style="max-width: 1200px; margin: 0 auto; padding: 40px 24px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px">
+<nav aria-label="Shop links" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0 0 4px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 22px; color: #ffd700">Shop</h2>
+<a href="Main.dc.html" style="color: #d6d6f0; font-size: 15px">All products</a>
+<a href="Main.dc.html" style="color: #d6d6f0; font-size: 15px">New arrivals</a>
+<a href="FAQ.dc.html" style="color: #d6d6f0; font-size: 15px">Custom orders</a>
+</nav>
+<nav aria-label="Help links" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0 0 4px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 22px; color: #ffd700">Help</h2>
+<a href="FAQ.dc.html" style="color: #d6d6f0; font-size: 15px">FAQ</a>
+<a href="Shipping.dc.html" style="color: #d6d6f0; font-size: 15px">Shipping &amp; returns</a>
+<a href="mailto:[email]" style="color: #d6d6f0; font-size: 15px">Contact: [your email]</a>
+</nav>
+<nav aria-label="About links" style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0 0 4px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 22px; color: #ffd700">About</h2>
+<a href="About.dc.html" style="color: #d6d6f0; font-size: 15px">About the shop</a>
+<a href="[instagram]" style="color: #d6d6f0; font-size: 15px">[Instagram]</a>
+</nav>
+<form style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0 0 4px; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 22px; color: #ffd700">Mailing list</h2>
+<label for="news-email" style="font-size: 14px; color: #d6d6f0">New drops, straight to your inbox.</label>
+<div style="display: flex; gap: 6px">
+<input id="news-email" type="email" placeholder="you@example.com" style="flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; font: 15px Tahoma, Verdana, sans-serif; color: #000; background: #fff; border: 2px solid; border-color: #404040 #ffffff #ffffff #404040">
+<button type="submit" style="min-height: 44px; padding: 0 14px; font: 700 15px Tahoma, Verdana, sans-serif; color: #000; background: #c0c0c0; border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; cursor: pointer">Sign up</button>
+</div>
+</form>
+</div>
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px 24px 32px; border-top: 2px dashed rgba(255,215,0,0.35); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #c9c9e6">
+<span>© 2026 shop.passion.graphics · Secure checkout by Stripe</span>
+<span style="font-family: 'Comic Sans MS', 'Comic Neue', cursive; color: #7fe9ff">Best viewed in Netscape Navigator 4.0</span>
+</div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
