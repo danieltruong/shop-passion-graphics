@@ -119,10 +119,11 @@ Gateway servers (`context7`, `github`, `chrome-devtools`, `browser`, `shadcn`, `
 committed. `stripe` project-scoped in `.mcp.json`. Register with `claude mcp add --scope user`:
 `projects["…"].mcpServers` not inherited below; `.claude/agents/*.md` edits need restart.
 
-- Library APIs (React, Vite, Framer Motion, Stripe SDK, Vitest, Playwright): `context7`, not recall.
+- Library APIs (React, Vite, Framer Motion, Stripe SDK, Vitest, Playwright): `context7`, not recall or WebSearch.
 - Stripe products, prices, sessions, refunds: `stripe`, not curl `api.stripe.com` or throwaway node script.
 - PRs, issues, code search: `github`, not `gh pr …`.
 - Lighthouse, performance checks on deployed site: `chrome-devtools`.
+- Screenshot/scrape public JS-heavy page: `browser`, not WebFetch.
 - CI run status and logs: `gh run list` / `gh run view --log-failed`; `github` has no Actions tools.
 - **Never** use `github` `push_files` or `create_or_update_file`: push to `main` deploys.
 - `browser` and `chrome-devtools` run on `192.168.5.22`, cannot reach this machine's
