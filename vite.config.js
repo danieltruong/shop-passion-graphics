@@ -1,12 +1,10 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { text } from 'node:stream/consumers'
 import { handleCheckout } from './lambda/create-checkout/checkout-core.mjs'
 
-// import.meta.dirname, not fileURLToPath(new URL(...)): a jsdom test imports this file, and
-// fileURLToPath rejects jsdom's global URL.
-const CATALOG_PATH = resolve(import.meta.dirname, 'public/products.json')
+const CATALOG_PATH = fileURLToPath(new URL('./public/products.json', import.meta.url))
 
 /** Dev stand-in for lambda/create-checkout/index.mjs: Node req/res instead of an API Gateway event. */
 export async function checkoutMiddleware(req, res, env) {
@@ -23,12 +21,13 @@ export async function checkoutMiddleware(req, res, env) {
   res.end(body === '' ? '' : JSON.stringify(body))
 }
 
+// Vite's cors middleware answers preflights and sets CORS headers first: dev CORS is looser than the Lambda.
 const checkoutDevApi = {
   name: 'checkout-dev-api',
   apply: 'serve',
   configureServer(server) {
     // Vite keeps .env.local off process.env, and handleCheckout needs STRIPE_SECRET_KEY and ALLOWED_ORIGIN.
-    const env = loadEnv(server.config.mode, server.config.root, '')
+    const env = loadEnv(server.config.mode, server.config.envDir, '')
     server.middlewares.use('/api/create-checkout', (req, res, next) => {
       checkoutMiddleware(req, res, env).catch(next)
     })
@@ -38,14 +37,18 @@ const checkoutDevApi = {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), checkoutDevApi],
+  // ALLOWED_ORIGIN names :5173, so a busy port must fail rather than move to :5174 and 403.
+  server: { port: 5173, strictPort: true },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.js'],
+    // CartDrawer's URL assertion expects the /api/create-checkout fallback even if .env.local sets this.
+    env: { VITE_CHECKOUT_API_URL: '' },
     // nmHoistingLimits gives lambda/create-checkout its own stripe, so vi.mock('stripe') would
     // miss checkout-core.mjs's import; pointing both at the root copy makes the mock apply.
     alias: {
-      stripe: resolve(import.meta.dirname, 'node_modules/stripe'),
+      stripe: fileURLToPath(new URL('./node_modules/stripe', import.meta.url)),
     },
     // e2e/*.spec.js matches vitest's default include glob but is a Playwright suite —
     // it imports @playwright/test and cannot run under jsdom. Run it via `yarn test:e2e`.

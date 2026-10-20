@@ -55,28 +55,30 @@ export function setReducedMotion(value) {
   reducedMotion = value
 }
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn((query) => ({
-    media: query,
-    matches: query.includes('prefers-reduced-motion') ? reducedMotion : false,
-    onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-})
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn((query) => ({
+      media: query,
+      matches: query.includes('prefers-reduced-motion') ? reducedMotion : false,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  })
 
-// jsdom has no layout engine; framer-motion calls this on animated elements.
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = vi.fn()
+  // jsdom has no layout engine; framer-motion calls this on animated elements.
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = vi.fn()
+  }
 }
 
 afterEach(() => {
   cleanup()
-  localStorage.clear()
+  globalThis.localStorage?.clear()
   reducedMotion = false
   vi.clearAllMocks()
 })

@@ -10,7 +10,7 @@ Library (jsdom); Stripe 23 (Checkout Sessions, `mode: 'payment'`); AWS SAM → L
 
 ```bash
 yarn                   # install (yarn install --immutable in CI)
-yarn dev               # vite on :5173; vite.config.js middleware serves /api/create-checkout
+yarn dev               # vite on :5173 (strictPort); vite.config.js middleware serves /api/create-checkout
 yarn test:run          # vitest (unit/component), single run
 yarn coverage          # vitest with v8 coverage
 yarn test:e2e          # playwright (browser), builds + previews automatically
@@ -116,15 +116,20 @@ frontend with the stack's API URL and syncs to S3.
 
 Gateway servers (`context7`, `github`, `chrome-devtools`, `browser`, `shadcn`, `magic-ui`,
 `jira-eao-dst`) from mcpjungle at `http://192.168.5.22:8080/mcp`, user scope, never
-committed. `stripe` project-scoped in `.mcp.json`.
+committed. `stripe` project-scoped in `.mcp.json`. Register with `claude mcp add --scope user`:
+`projects["…"].mcpServers` not inherited below; `.claude/agents/*.md` edits need restart.
 
 - Library APIs (React, Vite, Framer Motion, Stripe SDK, Vitest, Playwright): `context7`, not recall.
+- Stripe products, prices, sessions, refunds: `stripe`, not curl `api.stripe.com` or throwaway node script.
+- PRs, issues, code search: `github`, not `gh pr …`.
+- Lighthouse, performance checks on deployed site: `chrome-devtools`.
 - CI run status and logs: `gh run list` / `gh run view --log-failed`; `github` has no Actions tools.
 - **Never** use `github` `push_files` or `create_or_update_file`: push to `main` deploys.
 - `browser` and `chrome-devtools` run on `192.168.5.22`, cannot reach this machine's
   `localhost`. For local app use `webapp-testing` skill.
 - `shadcn`, `magic-ui` (no Tailwind here) and `jira-eao-dst` (other employer) never apply.
-- MCP grants in `.claude/agents/*.md` `tools:` and `.claude/settings.json` stay read-only.
+- MCP grants in `.claude/agents/*.md` `tools:` and `.claude/settings.json` stay read-only, one
+  tool each: bare `mcp__mcpjungle` rule would also allow `merge_pull_request` and `push_files`.
 - `stripe_api_read` takes operation ID (`GetPrices`), not URL; find with
   `stripe_api_search`. `scripts/generate-products.js` keeps calling REST API (no MCP in CI).
 

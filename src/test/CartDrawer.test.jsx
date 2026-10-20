@@ -173,6 +173,7 @@ describe('checkout', () => {
     await userEvent.click(screen.getByRole('button', { name: /checkout/i }))
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    expect(global.fetch.mock.calls[0][0]).toBe('/api/create-checkout')
     const body = JSON.parse(global.fetch.mock.calls[0][1].body)
     expect(body).toEqual({ cart: [{ priceId: 'price_frog', quantity: 2 }] })
     expect(JSON.stringify(body)).not.toContain('10000')
