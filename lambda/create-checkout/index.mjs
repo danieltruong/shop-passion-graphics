@@ -1,17 +1,5 @@
-/**
- * AWS Lambda: POST /create-checkout — PRODUCTION handler.
- *
- * Thin adapter over checkout-core.mjs. All validation, CORS policy, catalog checking, and
- * session creation live there and are shared with the Netlify dev handler. Keep this file
- * limited to event-shape translation.
- *
- * Deployed behind API Gateway; both REST (v1) and HTTP API (v2) event shapes are supported.
- *
- * Environment: STRIPE_SECRET_KEY, ALLOWED_ORIGIN — see checkout-core.mjs.
- *
- * Request body:  { cart: [{ priceId: string, quantity: number }] }
- * Response (200): { url: string } — Stripe-hosted checkout URL
- */
+// Production adapter: API Gateway REST (v1) and HTTP (v2) events to checkout-core.mjs, which
+// holds all logic and is shared with the Vite dev middleware. Keep this file to shape translation.
 
 import { fileURLToPath } from 'node:url'
 import { handleCheckout } from './checkout-core.mjs'

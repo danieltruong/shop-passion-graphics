@@ -1,17 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-/**
- * Playwright config — end-to-end tests in a real browser.
- *
- * These exist to cover what jsdom structurally cannot: focus management, computed styles,
- * `prefers-reduced-motion`, and whether an element is actually reachable by keyboard. The
- * vitest suite in src/test/ covers logic; this covers behaviour that needs a layout engine.
- *
- * Runs against `vite preview` on the built output rather than the dev server, so the tests
- * exercise the same bundle that ships. `yarn dev` is deliberately not used — it starts
- * `netlify dev`, which needs the Netlify CLI and the checkout function, neither of which the
- * accessibility tests depend on.
- */
+// Real-browser checks jsdom cannot do: focus, computed styles, reduced motion, keyboard reach.
+// Runs against `vite preview`, not `yarn dev`, so the tests exercise the bundle that ships.
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,

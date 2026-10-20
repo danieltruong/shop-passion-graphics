@@ -48,9 +48,6 @@ desktop.ini
 *.p12
 *.pfx
 
-# Local Netlify folder
-.netlify
-
 # SAM build/package artifacts (infra/samconfig.toml IS tracked — deploy.yml needs it)
 .aws-sam/
 packaged.yaml

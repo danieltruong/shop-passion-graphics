@@ -1,25 +1,5 @@
-/**
- * Shared checkout logic — the single source of truth for creating Stripe Checkout Sessions.
- *
- * Consumed by two thin, runtime-specific adapters:
- *   - lambda/create-checkout/index.mjs         (production, API Gateway v1/v2)
- *   - netlify/functions/create-checkout.js     (local `netlify dev` only)
- *
- * This file lives inside lambda/create-checkout/ deliberately: infra/template.yaml sets
- * `CodeUri: ../lambda/create-checkout/`, and SAM packages only that directory. The Netlify
- * function imports it by relative path; Netlify's esbuild bundler follows the import.
- *
- * Do NOT fork this logic back into the adapters. The two handlers previously held duplicate
- * copies, and an open-redirect fix landed in only one of them.
- *
- * Environment:
- *   ALLOWED_ORIGIN     — Comma-separated origin allowlist, e.g.
- *                        "https://shop.passion.graphics,https://staging.shop.passion.graphics"
- *                        Required. There is no wildcard fallback.
- *   STRIPE_SECRET_ARN  — Production. SSM SecureString parameter holding the Stripe key,
- *                        fetched at cold start so the key is never a plaintext Lambda env var.
- *   STRIPE_SECRET_KEY  — Local development only (.env.local). Takes precedence when set.
- */
+// Only copy of the checkout logic, for index.mjs and the vite.config.js dev middleware; never fork it.
+// Lives here because SAM packages only this directory (`CodeUri` in infra/template.yaml).
 
 import Stripe from 'stripe'
 import { readFile } from 'node:fs/promises'

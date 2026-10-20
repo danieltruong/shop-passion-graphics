@@ -26,20 +26,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { formatPrice } from '../utils/formatPrice'
 import { lineKey, subtotal as cartSubtotal, cartCurrency, MAX_QTY } from '../utils/cart'
 
-/**
- * Checkout endpoint:
- *   - Production/staging: VITE_CHECKOUT_API_URL set at build time (API Gateway → Lambda)
- *   - Local dev:          falls back to the Netlify function served by `netlify dev`
- *
- * `||`, not `??`: Vite substitutes a declared-but-empty env var as `""`, which `??` passes
- * through. That produced `fetch("")` — a POST to the current page returning index.html with
- * HTTP 200, so the empty-body guard below never fired and the user saw a raw JSON parse error.
- *
- * VITE_CHECKOUT_API_URL is a *public* URL — not a secret. The secret key lives exclusively in
- * the Lambda/Netlify function environment, never in this bundle.
- */
-const CHECKOUT_URL =
-  import.meta.env.VITE_CHECKOUT_API_URL || '/.netlify/functions/create-checkout'
+// Unset locally, so dev hits the Vite checkout middleware. `||`, not `??`: Vite turns a
+// declared-but-empty env var into "", and fetch("") would POST to the page itself.
+const CHECKOUT_URL = import.meta.env.VITE_CHECKOUT_API_URL || '/api/create-checkout'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -111,7 +100,7 @@ export default function CartDrawer({ cart, isOpen, onClose, onUpdateQty, onClear
         }),
       })
 
-      // Guard against an empty body (e.g. a 404 from Vite on :5173 instead of netlify dev on :8888)
+      // Empty body, e.g. the 404 from `vite preview`, which has no checkout middleware
       const text = await res.text()
       if (!text) {
         throw new Error(
