@@ -1,20 +1,5 @@
-/**
- * Netlify Function: POST /.netlify/functions/create-checkout — LOCAL DEVELOPMENT ONLY.
- *
- * Production runs on AWS Lambda (see lambda/create-checkout/index.mjs); this exists so
- * `netlify dev` can serve the same endpoint locally.
- *
- * Thin adapter over the shared checkout-core.mjs. Netlify's esbuild bundler follows the
- * relative import, so the shared module ships with the function.
- *
- * This handler previously derived success_url / cancel_url from the request's Origin/Host
- * headers, which was an open redirect. Redirect URLs now come from ALLOWED_ORIGIN, exactly
- * as in production. For local use set ALLOWED_ORIGIN=http://localhost:8888 in .env.local.
- *
- * Request body:  { cart: [{ priceId: string, quantity: number }] }
- * Response (200): { url: string }
- * Response (4xx/5xx): { error: string }
- */
+// Local `netlify dev` only: same endpoint as lambda/create-checkout/index.mjs (request shape
+// there). Locally set ALLOWED_ORIGIN=http://localhost:8888 in .env.local.
 
 import { resolve } from 'node:path'
 import { handleCheckout } from '../../lambda/create-checkout/checkout-core.mjs'
