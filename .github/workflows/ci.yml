@@ -62,8 +62,8 @@ jobs:
           test -f dist/products.json || (echo "❌ dist/products.json missing" && exit 1)
           echo "✅ Build OK — $(du -sh dist/ | cut -f1)"
 
-      # jsdom cannot test focus management, computed styles or prefers-reduced-motion;
-      # these browser tests do. They reuse the dist/ built above via `vite preview`.
+      # jsdom cannot test focus, computed styles or prefers-reduced-motion; these browser tests do.
+      # Playwright's webServer rebuilds (`yarn build && yarn preview`) in CI; Build above fails fast.
       - name: Install Playwright browser
         run: yarn playwright install --with-deps chromium
 
