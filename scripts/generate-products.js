@@ -96,7 +96,7 @@ function makeStripeRequest(requestPath, method = 'GET') {
             reject(new Error(`Failed to parse Stripe response: ${err.message}`));
           }
         } else {
-          let detail = '';
+          let detail;
           try {
             // Stripe's `message` is safe to surface; the full payload is not.
             detail = JSON.parse(data)?.error?.message ?? '';

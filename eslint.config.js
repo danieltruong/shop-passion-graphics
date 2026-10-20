@@ -2,7 +2,6 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import react from 'eslint-plugin-react'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
@@ -58,7 +57,7 @@ export default defineConfig([
   // All JS/JSX source files
   {
     files: ['**/*.{js,jsx,mjs}'],
-    plugins: { react, 'jsx-a11y': jsxA11y },
+    plugins: { 'jsx-a11y': jsxA11y },
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
@@ -73,22 +72,14 @@ export default defineConfig([
         sourceType: 'module',
       },
     },
-    settings: { react: { version: 'detect' } },
     rules: {
-      ...react.configs.flat.recommended.rules,
-      ...react.configs.flat['jsx-runtime'].rules,
       // Accessibility rules would have caught the missing aria-hidden on decorative emoji,
       // the redundant cart-thumbnail alt text, and the unannounced loading state.
       ...jsxA11y.flatConfigs.recommended.rules,
 
-      // No varsIgnorePattern: '^[A-Z_]' — it exempted every capitalized identifier, which is
-      // every component import and every animation constant, and is precisely why the dead
-      // exports in utils/animations.js were never flagged. react/jsx-uses-vars already
-      // handles the "unused component import in JSX" case it was meant to cover.
+      // No varsIgnorePattern: '^[A-Z_]' would exempt every component import and animation
+      // constant. ESLint 10 counts JSX usage as a reference, so none is needed.
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'react/jsx-uses-vars': 'error',
-      // This project passes plain objects around; prop-types adds noise without types.
-      'react/prop-types': 'off',
     },
   },
 ])
