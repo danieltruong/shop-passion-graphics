@@ -25,8 +25,7 @@ env:
   AWS_REGION: ca-central-1
 
 jobs:
-  # Deploy is gated on CI. Previously deploy.yml triggered independently on push to develop
-  # with no dependency, so a commit that failed lint or tests deployed anyway, in parallel.
+  # CI runs first so a commit that fails lint or tests never deploys.
   ci:
     uses: ./.github/workflows/ci.yml
 
@@ -37,8 +36,7 @@ jobs:
     environment: ${{ inputs.environment || 'staging' }}
     permissions:
       contents: read
-      # Required for OIDC. Commit 55fe4e6 introduced OIDC, f23e220 replaced it with
-      # long-lived access keys, and those then needed manual rotation in 4552175.
+      # Required for OIDC.
       id-token: write
 
     steps:
@@ -59,12 +57,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # Fail early and clearly rather than part-way through a deploy.
-      #
-      # ALLOWED_ORIGIN used to be checked here, because a wildcard-CORS API was the failure
-      # mode of an unset secret. It is no longer a secret at all: the template derives the
-      # allowlist from the CloudFront distribution it creates, so the value cannot be unset,
-      # cannot be `*`, and cannot name an origin that does not exist.
+      # Fail early rather than part-way through a deploy. ALLOWED_ORIGIN is not a secret:
+      # the template derives it from the CloudFront distribution it creates.
       - name: Verify required secrets
         env:
           STRIPE_SECRET_ARN: ${{ secrets.STRIPE_SECRET_ARN }}
@@ -101,10 +95,8 @@ jobs:
       # copies the node_modules that `yarn install --immutable` above already produced in the
       # workspace — so that install step is a build dependency of this one, not just a test one.
       #
-      # No `continue-on-error` here. It previously made this job report green even when the
-      # entire checkout API failed to deploy — and because `run:` executes under `bash -e`, a
-      # failure aborted before checkout_url was set, so the build silently fell back to an
-      # empty VITE_CHECKOUT_API_URL and shipped a broken checkout button behind a green pipeline.
+      # No `continue-on-error`: a failed API deploy must fail the job, or the build ships an
+      # empty VITE_CHECKOUT_API_URL and a broken checkout button.
       - name: Deploy Checkout API (SAM)
         id: sam
         run: |
@@ -170,8 +162,7 @@ jobs:
         run: yarn build
         env:
           NODE_ENV: production
-          # Taken straight from the stack output. The previous `|| secrets.…` fallback could
-          # resolve to an empty string, which CartDrawer's `??` did not catch.
+          # Stack output only: a secret fallback could be empty, which CartDrawer's `??` misses.
           VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url }}
 
       - name: Deploy to S3
@@ -189,18 +180,15 @@ jobs:
           aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
             --cache-control "public, max-age=0, must-revalidate"
 
-          # No `|| true`: that swallowed a *failed* upload as well as a missing file, so the
-          # product catalog could silently fail to publish.
+          # No `|| true`: it would hide a failed upload, so the catalog could silently not publish.
           aws s3 cp dist/products.json \
             s3://${{ secrets.S3_BUCKET_NAME }}/products.json \
             --cache-control "public, max-age=0, must-revalidate"
 
           echo "✅ S3 sync complete"
 
-      # The distribution ID comes from the stack, not from a CLOUDFRONT_DISTRIBUTION_ID secret.
-      # The secret version had a silent-skip branch: an unset secret printed "no CloudFront
-      # configured" and moved on, so a stale index.html could survive a deploy indefinitely
-      # while the job still reported success. There is nothing optional about it now.
+      # Distribution ID comes from the stack, not a secret, so this step cannot be skipped
+      # and leave a stale index.html behind a green job.
       - name: Invalidate CloudFront cache
         run: |
           set -euo pipefail
