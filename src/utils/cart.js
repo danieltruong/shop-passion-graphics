@@ -1,13 +1,5 @@
-/**
- * Cart operations — pure functions over the cart array, so they can be tested without
- * mounting React.
- *
- * Cart shape: [{ product: ProductObject, quantity: number }]
- *
- * Lines are keyed on `stripePriceId`, not `productId`. Checkout sends price IDs, so a Stripe
- * product with two prices must be two cart lines; keying on the product would collapse them
- * into one and silently send only one of the prices.
- */
+// Lines key on `stripePriceId`, not `productId`: checkout sends price IDs, so a product
+// with two prices must stay two lines.
 
 /** Mirrors MAX_QTY in lambda/create-checkout/checkout-core.mjs. */
 export const MAX_QTY = 99
@@ -22,15 +14,7 @@ export function lineKey(product) {
   return product.stripePriceId ?? product.productId
 }
 
-/**
- * Add one unit of `product`, incrementing an existing line if present.
- *
- * Returns { cart, error }. Rejections are surfaced rather than thrown so the UI can show them:
- *  - a currency that differs from the rest of the cart (Stripe Checkout accepts a single
- *    currency per session; mixing them also makes the subtotal meaningless)
- *  - more than MAX_LINE_ITEMS distinct lines, or more than MAX_QTY of one line — both of which
- *    the backend rejects, so catching them here avoids an opaque failure at checkout
- */
+/** Add one unit of `product`. Returns { cart, error }; rejections the backend would refuse anyway are returned, not thrown. */
 export function addToCart(cart, product) {
   const key = lineKey(product)
   const existing = cart.find((item) => lineKey(item.product) === key)
@@ -87,15 +71,8 @@ export function totalItems(cart) {
   return cart.reduce((sum, item) => sum + item.quantity, 0)
 }
 
-/**
- * Read the persisted cart.
- *
- * Persistence matters because Stripe's cancel_url returns the customer to `/`, which
- * previously wiped everything they had assembled.
- *
- * Stored lines are re-validated against the live catalog: a price archived since the cart was
- * saved would otherwise be rejected at checkout with an unexplained "Unknown product".
- */
+// Stored lines are re-validated against the live catalog: an archived price would
+// otherwise fail at checkout with an unexplained "Unknown product".
 export function loadCart(products) {
   let stored
   try {

@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch, mcp__mcpjungle__context7__
 
 # Accessibility Expert
 
-> Use `context7` for framework-specific APIs (React 19.2, Framer Motion 12) before asserting
+> Use `context7` for framework-specific APIs (React 19.3, Framer Motion 14) before asserting
 > them. Accessibility *behaviour* — focus traps, `prefers-reduced-motion`, computed styles —
 > is verified in `e2e/` with real Playwright, never in jsdom: a vitest test asserting the markup
 > is not evidence the behaviour works.
