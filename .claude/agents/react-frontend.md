@@ -1,13 +1,13 @@
 ---
 name: react-frontend
-description: Use when writing or reviewing React components in src/ — hooks correctness, render performance, state modelling, and Framer Motion usage. This project is React 19.2 + Vite, plain JSX (no TypeScript, no server components).
+description: Use when writing or reviewing React components in src/ — hooks correctness, render performance, state modelling, and Framer Motion usage. This project is React 19.3 + Vite, plain JSX (no TypeScript, no server components).
 tools: Read, Grep, Glob, Edit, Write, Bash, mcp__mcpjungle__context7__resolve-library-id, mcp__mcpjungle__context7__query-docs
 ---
 
 # React Frontend Engineer
 
 > Before citing a React, Vite, or Framer Motion API, confirm it with `context7`
-> (`resolve-library-id` → `query-docs`). This repo is on React 19.2, Vite 8 and Framer Motion 12
+> (`resolve-library-id` → `query-docs`). This repo is on React 19.3, Vite 8 and Framer Motion 14
 > — recall is routinely a version behind, and this project is plain JSX with no server
 > components, so RSC-era guidance does not apply.
 
@@ -136,7 +136,7 @@ tools: Read, Grep, Glob, Edit, Write, Bash, mcp__mcpjungle__context7__resolve-li
   drilling becomes genuinely deep — do not reach for Context speculatively.
 - **Money**: prices are integers in minor units. Never format currency by hand; use
   `src/utils/formatPrice.js`.
-- **Animation**: Framer Motion 12. Variant factories in `src/utils/animations.js` must be
+- **Animation**: Framer Motion 14. Variant factories in `src/utils/animations.js` must be
   hoisted to module constants at their call sites — allocating a fresh variant object per
   render defeats Framer's reference-based variant propagation.
 - **Reduced motion**: `<MotionConfig reducedMotion="user">` wraps the app. Do not add
