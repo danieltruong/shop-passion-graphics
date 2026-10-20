@@ -74,7 +74,7 @@ must be declared. `@testing-library/dom` is a direct devDependency for exactly t
 `@testing-library/react` v16 lists it as a *peer*, npm's hoisting hid it, and the whole test
 suite failed to resolve it under yarn.
 
-**Installs must stay warning-free.** `ts-node` `packageExtensions` entry in `.yarnrc.yml`
+**Installs must stay warning-free** (one known exception, below). `ts-node` `packageExtensions` entry in `.yarnrc.yml`
 fixes broken peer metadata inside netlify-cli's tree. `packageExtensions` can only *add*
 metadata; widening declared range needs `resolutions` (yarn reports YN0069 otherwise).
 Re-check on netlify-cli upgrades, delete when upstream fixes declaration.
@@ -82,9 +82,10 @@ Re-check on netlify-cli upgrades, delete when upstream fixes declaration.
 `npmMinimalAgeGate` (Yarn default 1440 minutes) quarantines releases under day old:
 `yarn up` fails with YN0016 on them. Pick previous version; do not lower gate.
 
-**ESLint is held at 9.x.** ESLint 10 crashes `eslint-plugin-react` 7.37.5
-(`contextOrFilename.getFilename is not a function`); that plugin and `eslint-plugin-jsx-a11y`
-both cap their peer range at `^9`. Revisit when they ship v10 support.
+**ESLint 10, without `eslint-plugin-react`.** Its 7.37.5 crashes on ESLint 10
+(`contextOrFilename.getFilename is not a function`). `eslint-plugin-jsx-a11y` 6.10.2 runs fine
+but caps its peer range at `^9`, so install warns YN0060/YN0086; neither `packageExtensions`
+nor a `patch:` can widen a peer range. Revisit both when they ship v10 support.
 
 ## Architecture
 
