@@ -5,7 +5,7 @@ Static frontend on S3/CloudFront; checkout runs as an AWS Lambda behind API Gate
 
 ## Stack
 
-- React 19.2 + Vite 8, **plain JSX — no TypeScript**
+- React 19 + Vite 8, **plain JSX — no TypeScript**
 - Framer Motion 12 for animation
 - Vitest 4 + Testing Library (jsdom)
 - Stripe 22 (Checkout Sessions, `mode: 'payment'`)
@@ -24,6 +24,23 @@ yarn lint              # eslint (covers src/, scripts/, netlify/, lambda/)
 yarn build             # vite build → dist/
 yarn generate:products # regenerate the catalog from the Stripe API
 ```
+
+`yarn dev` reads `.env.local` (copy `.env.example`); set `STRIPE_SECRET_KEY` to Stripe
+test-mode key before checkout works. Storefront renders without it.
+
+Inside a git worktree `netlify dev` takes the main checkout as repository root, even with
+`--cwd`: the checkout function returns 404 and the main checkout gets a `.netlify/` folder.
+Test the function from a normal clone.
+
+## Pre-push verifier
+
+Before push, run in order, every one must pass (CI `ci.yml` runs same):
+
+```bash
+yarn install --immutable && yarn lint && yarn test:run && VITE_CHECKOUT_API_URL= yarn build && yarn test:e2e
+```
+
+`yarn test:e2e` needs `yarn playwright install chromium` once per machine.
 
 ## Package manager
 
@@ -57,12 +74,13 @@ must be declared. `@testing-library/dom` is a direct devDependency for exactly t
 `@testing-library/react` v16 lists it as a *peer*, npm's hoisting hid it, and the whole test
 suite failed to resolve it under yarn.
 
-**Installs must stay warning-free.** Two entries exist purely to keep them that way, both
-fixing broken metadata inside netlify-cli's tree: a `ts-node` `packageExtensions` entry in
-`.yarnrc.yml`, and an `@opentelemetry/api` pin in `resolutions`. Note `packageExtensions` can
-only *add* metadata — it cannot widen a range a package already declares (yarn reports YN0069
-if you try), which is why the second one is a resolution instead. Re-check both on netlify-cli
-upgrades and delete them when upstream fixes the declarations.
+**Installs must stay warning-free.** `ts-node` `packageExtensions` entry in `.yarnrc.yml`
+fixes broken peer metadata inside netlify-cli's tree. `packageExtensions` can only *add*
+metadata; widening declared range needs `resolutions` (yarn reports YN0069 otherwise).
+Re-check on netlify-cli upgrades, delete when upstream fixes declaration.
+
+`npmMinimalAgeGate` (Yarn default 1440 minutes) quarantines releases under day old:
+`yarn up` fails with YN0016 on them. Pick previous version; do not lower gate.
 
 **ESLint is held at 9.x.** ESLint 10 crashes `eslint-plugin-react` 7.37.5
 (`contextOrFilename.getFilename is not a function`); that plugin and `eslint-plugin-jsx-a11y`
@@ -71,8 +89,9 @@ both cap their peer range at `^9`. Revisit when they ship v10 support.
 ## Architecture
 
 - **Catalog** — `scripts/generate-products.js` reads the Stripe API and writes
-  `public/products.json`. It runs at `prebuild`. The committed catalog is the fallback when no
-  Stripe key is available (CI does not regenerate).
+  `public/products.json`. Runs only by hand; neither build, CI nor deploy regenerates it,
+  so committed catalog is what ships. `deploy.yml` copies it into Lambda with
+  `yarn sync:catalog`.
 - **Cart** — state is owned by `src/App.jsx` and passed down to `Header`/`CartIcon` and
   `CartDrawer`. Persisted to `localStorage` so the Stripe cancel redirect doesn't wipe it.
   Cart lines are keyed on `stripePriceId`.
@@ -132,7 +151,7 @@ GitHub environment secrets consumed by `deploy.yml`: `AWS_ROLE_ARN`, `STRIPE_SEC
 
 ## Deploy
 
-Push to `develop` → CI (lint + test + build) must pass → `deploy.yml` runs SAM, then builds the
+Push to `develop` → CI (lint + test + build + e2e) must pass → `deploy.yml` runs SAM, then builds the
 frontend with the stack's API URL and syncs to S3.
 
 **The site is served by CloudFront, not by the bucket.** The S3 *website* endpoint is HTTP-only
@@ -190,7 +209,7 @@ OAuth support either.
 | Screenshot or scrape a **public** JS-heavy page | `browser` | `WebFetch` on a JS-rendered page |
 | Anything pointed at **`localhost`** | the `webapp-testing` skill (Node Playwright, `e2e/*.spec.js`) | `browser` / `chrome-devtools` — both run off-box |
 
-The version-drift rule matters most for `context7`: this repo is on React 19.2, Vite 8, Framer
+The version-drift rule matters most for `context7`: this repo on React 19, Vite 8, Framer
 Motion 12 and Stripe 22, all newer than reliable recall. Look it up rather than assert it.
 
 **Not applicable to this repo** — don't re-evaluate these each session:
@@ -259,6 +278,25 @@ host (`192.168.5.22`), which is not this machine (`192.168.5.162`). They **canno
 server on this machine's `localhost`**; `localhost:5173` resolves to the gateway container, not
 to Vite. They are for public URLs only — the deployed CloudFront site, third-party pages. For
 testing the app itself, use the `webapp-testing` skill below.
+
+## Subagent routing
+
+`a11y-reviewer` and `security-reviewer` in `.claude/agents/` replace user agents of same name.
+
+| Task | Agent | Not |
+|---|---|---|
+| React component or hook in `src/` | `react-frontend` | `general-purpose` |
+| Workflow, SAM template, deploy config | `ci-cd-expert` | `coder` alone |
+| Playwright spec in `e2e/` | `playwright-tester` | `tester` for browser behaviour |
+| Accessibility review | `a11y-reviewer` | `reviewer` |
+| Checkout, CORS, secrets, Stripe surface | `security-reviewer` | `reviewer` alone |
+| Multi-file change from a clear spec | `coder` | `general-purpose` |
+| 1-2 file mechanical edit | `builder` | `coder` |
+| Vitest unit or component tests | `tester` | `coder` |
+| Diff or branch review | `reviewer` | same agent that wrote it |
+| Find code, map callers | `investigator` | reading the tree inline |
+| Unknown cause of a failure | `debugger` | guessing a fix |
+| Rendered page check | `visual-check` | main-session screenshots |
 
 ## Skills
 
