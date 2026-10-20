@@ -16,11 +16,12 @@
  * Response (4xx/5xx): { error: string }
  */
 
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import { handleCheckout } from '../../lambda/create-checkout/checkout-core.mjs'
 
-/** Served straight from public/ in dev — no catalog copy needed locally. */
-const CATALOG_PATH = fileURLToPath(new URL('../../public/products.json', import.meta.url))
+// netlify dev bundles this as CJS, where import.meta.url is empty; it runs from the repo
+// root, so resolve the catalog in public/ from the working directory instead.
+const CATALOG_PATH = resolve(process.cwd(), 'public/products.json')
 
 export const handler = async (event) => {
   const { status, headers, body } = await handleCheckout({
