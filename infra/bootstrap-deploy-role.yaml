@@ -273,20 +273,15 @@ Resources:
                   - cloudfront:CreateInvalidation
                 Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/*'
 
-              # Origin Access Control — what lets CloudFront sign its S3 reads, so the bucket
-              # needs no public grant.
-              #
-              # On '*' rather than an origin-access-control/* ARN. These actions do support
-              # resource-level permissions, but an OAC holds no data and grants no access by
-              # itself, so the value of scoping it is close to zero — and getting the ARN shape
-              # wrong costs another failed deploy and rollback. Not worth the trade.
+              # CreateOriginAccessControl is on '*' above because the OAC does not exist yet;
+              # these four act on an existing OAC, so they are scoped to this account's OACs.
               - Effect: Allow
                 Action:
                   - cloudfront:UpdateOriginAccessControl
                   - cloudfront:DeleteOriginAccessControl
                   - cloudfront:GetOriginAccessControl
                   - cloudfront:GetOriginAccessControlConfig
-                Resource: '*'
+                Resource: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*'
 
               # The cache and response-headers policies the distribution references are
               # AWS-managed and live outside this account, so they have no account-scoped ARN
