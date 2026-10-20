@@ -151,7 +151,7 @@ GitHub environment secrets consumed by `deploy.yml`: `AWS_ROLE_ARN`, `STRIPE_SEC
 
 ## Deploy
 
-Push to `develop` → CI (lint + test + build + e2e) must pass → `deploy.yml` runs SAM, then builds the
+Push to `main` → CI (lint + test + build + e2e) must pass → `deploy.yml` runs SAM, then builds the
 frontend with the stack's API URL and syncs to S3.
 
 **The site is served by CloudFront, not by the bucket.** The S3 *website* endpoint is HTTP-only
@@ -222,7 +222,7 @@ Motion 12 and Stripe 22, all newer than reliable recall. Look it up rather than 
 **Hard rules:**
 
 - **Never** use `github`'s `push_files` or `create_or_update_file` against this repo. A push to
-  `develop` triggers `deploy.yml`; commits go through local git so lint/test/build gate them
+  `main` triggers `deploy.yml`; commits go through local git so lint/test/build gate them
   first.
 - The `github` server is the legacy `@modelcontextprotocol/server-github`: repos, issues, PRs
   and code search only. It cannot list workflow runs or read job logs, so `gh` stays the tool
