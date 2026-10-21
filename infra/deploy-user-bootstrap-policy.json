@@ -20,16 +20,23 @@
       "Resource": "arn:aws:iam::380069215548:role/shop-passion-*"
     },
     {
-      "Sid": "CreateTheGitHubOidcProvider",
+      "Sid": "CreateTheForgejoDeployUser",
       "Effect": "Allow",
       "Action": [
-        "iam:CreateOpenIDConnectProvider",
-        "iam:GetOpenIDConnectProvider",
-        "iam:ListOpenIDConnectProviders",
-        "iam:TagOpenIDConnectProvider",
-        "iam:UpdateOpenIDConnectProviderThumbprint"
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:GetUser",
+        "iam:UpdateUser",
+        "iam:PutUserPolicy",
+        "iam:GetUserPolicy",
+        "iam:DeleteUserPolicy",
+        "iam:ListUserPolicies",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListGroupsForUser",
+        "iam:TagUser",
+        "iam:UntagUser"
       ],
-      "Resource": "*"
+      "Resource": "arn:aws:iam::380069215548:user/shop-passion-forgejo-deploy"
     },
     {
       "Sid": "DeployTheBootstrapStackOnly",

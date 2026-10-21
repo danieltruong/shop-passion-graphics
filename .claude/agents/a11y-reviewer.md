@@ -248,7 +248,7 @@ Actions: …
 Refs: WCAG 2.2 [2.4.*, 3.3.*, 2.5.*] as applicable.
 ```
 
-## CI Example (GitHub Actions)
+## CI Example (Forgejo Actions, `.forgejo/workflows/`)
 
 ```yaml
 name: a11y-checks
