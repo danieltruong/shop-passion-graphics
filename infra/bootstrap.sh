@@ -34,8 +34,8 @@ export AWS_REGION="$REGION" AWS_DEFAULT_REGION="$REGION" AWS_PAGER=""
 aws_() { aws --region "$REGION" --no-cli-pager "$@"; }
 
 # ── 1. Choose credentials ─────────────────────────────────────────────────────────────────────
-# Probes IAM with a read the bootstrap policy grants. NoSuchEntity (first run, user absent)
-# still proves access; AccessDenied or missing credentials do not.
+
+# iam:GetUser probe: NoSuchEntity still proves IAM access; AccessDenied or no credentials do not.
 step "Selecting AWS credentials"
 
 can_do_iam() {
