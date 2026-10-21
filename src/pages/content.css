@@ -1,0 +1,344 @@
+/* About, FAQ and Shipping: text pages inside the layout's <main>. */
+.content-page {
+  --content-prose: #e2e2f5;
+
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+.content-page--narrow {
+  max-width: 1000px;
+  gap: 48px;
+}
+
+.content-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 8vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.content-intro {
+  text-align: center;
+}
+
+.content-intro .content-title {
+  margin-bottom: 10px;
+}
+
+.content-lead {
+  margin: 0;
+  color: var(--color-text-3);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.content-intro a {
+  color: var(--color-link);
+}
+
+.content-intro a:hover {
+  color: var(--color-link-hover);
+}
+
+.content-section-title {
+  margin: 0 0 24px;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 6vw, 2.375rem);
+  line-height: 1.2;
+}
+
+.content-prose {
+  margin: 0;
+  color: var(--content-prose);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* StepList look for About "How it's made" and Shipping "Returns". */
+.content-steps {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 20px;
+}
+
+.content-steps .step-list__item {
+  gap: 10px;
+  padding: 22px;
+  background: var(--color-panel);
+  border: var(--border-gold);
+}
+
+.content-steps .step-list__number {
+  color: var(--color-gold);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.content-steps .step-list__title {
+  font-size: 18px;
+}
+
+.content-steps .step-list__text {
+  color: var(--color-text-3);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* ===== About ===== */
+.about-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 48px;
+}
+
+.about-photo {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.about-photo__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 5;
+  padding: 12px;
+  color: #b8b8dd;
+  background: repeating-linear-gradient(45deg, #2a2a50 0 12px, #232345 12px 24px);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.about-text {
+  display: flex;
+  flex: 1 1 460px;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.about-text .content-prose {
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.about-how .content-section-title {
+  text-align: center;
+}
+
+.about-contact .window__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px;
+}
+
+.about-contact h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.about-contact p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* ===== FAQ ===== */
+.content-page.faq-page {
+  gap: 36px;
+}
+
+.faq-window .window__body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+}
+
+.faq-topics {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 8px;
+  background: #fff;
+}
+
+.faq-window .faq-topic {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--win-ink);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.faq-window .faq-topic:hover {
+  color: #fff;
+  background: var(--win-link);
+}
+
+.faq-sections {
+  display: flex;
+  flex: 999 1 560px;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.faq-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scroll-margin-top: 16px;
+}
+
+.faq-section h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+/* ===== Shipping ===== */
+.shipping-rates .window__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shipping-table-scroll {
+  overflow-x: auto;
+  background: #fff;
+}
+
+.shipping-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.shipping-table th,
+.shipping-table td {
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.shipping-table thead tr {
+  background: var(--win-pressed);
+}
+
+.shipping-table th {
+  border-bottom: 2px solid #808080;
+}
+
+.shipping-table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid var(--win-grey);
+}
+
+.shipping-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.shipping-returns .content-section-title {
+  margin-bottom: 8px;
+}
+
+.shipping-returns .content-prose {
+  margin-bottom: 22px;
+}
+
+.shipping-warning-icon {
+  color: var(--color-gold);
+}
+
+.shipping-damaged p {
+  margin: 0;
+  padding: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .content-page {
+    gap: 48px;
+    padding: 40px 16px 64px;
+  }
+
+  .about-intro {
+    gap: 32px;
+  }
+
+  .content-steps .step-list__item {
+    padding: 18px;
+  }
+
+  /* Stack the rates table: one sunken card per row, label from data-label. */
+  .shipping-table-scroll {
+    overflow: visible;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .shipping-table,
+  .shipping-table tbody,
+  .shipping-table tr,
+  .shipping-table td {
+    display: block;
+  }
+
+  .shipping-table {
+    min-width: 0;
+  }
+
+  .shipping-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .shipping-table tbody tr {
+    margin-bottom: 12px;
+    background: #fff;
+    border: 2px solid;
+    border-color: var(--bevel-sunken-colors);
+    box-shadow: var(--bevel-sunken-shadow);
+  }
+
+  .shipping-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .shipping-table tbody tr td {
+    border-bottom: 1px solid var(--win-grey);
+  }
+
+  .shipping-table tbody tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .shipping-table td::before {
+    content: attr(data-label);
+    /* Empty alt text: the cell's column header already names it for screen readers. */
+    content: attr(data-label) / "";
+    display: block;
+    color: var(--win-ink);
+    font-weight: 700;
+  }
+}

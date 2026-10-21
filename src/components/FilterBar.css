@@ -1,0 +1,86 @@
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 10px;
+  color: var(--win-ink);
+  background: var(--win-grey);
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.filter-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-bar__chip {
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--win-ink);
+  background: var(--win-grey);
+  font: 15px var(--font-body);
+  cursor: pointer;
+}
+
+.filter-bar__chip--active {
+  background: var(--win-pressed);
+  font-weight: 700;
+}
+
+.filter-bar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.filter-bar__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-bar__field {
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--win-ink);
+  background: #fff;
+  font: 15px var(--font-body);
+}
+
+/* Selected chip keeps a visible state when forced colours flatten the bevels. */
+@media (forced-colors: active) {
+  .filter-bar__chip[aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-bar {
+    margin: 0 12px 16px;
+  }
+
+  /* One swipeable row of chips instead of wrapping lines (MobileHome mockup). */
+  .filter-bar__chips {
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .filter-bar__chip {
+    flex: none;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .filter-bar__controls {
+    width: 100%;
+  }
+}

@@ -7,6 +7,8 @@
 }
 
 html {
+  min-height: 100%;
+  background-color: var(--color-bg);
   scroll-behavior: smooth;
 }
 
@@ -14,54 +16,32 @@ html {
 
 body {
   font-family: var(--font-body);
-  color: var(--text-primary);
+  color: var(--color-text);
   min-height: 100dvh;
   overflow-x: hidden;
 
-  /* Dark smoky/cloudy background */
+  /* Dark smoky/cloudy background. Sized to the body box, not the viewport, so it spans the whole page. */
   background:
     radial-gradient(ellipse at 20% 50%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(0, 0, 80, 0.4) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 80%, rgba(30, 0, 50, 0.5) 0%, transparent 50%),
-    linear-gradient(180deg, var(--bg-cloud-1) 0%, var(--bg-dark) 30%, var(--bg-cloud-4) 70%, var(--bg-cloud-2) 100%);
-  background-attachment: fixed;
+    linear-gradient(180deg, var(--bg-cloud-1) 0%, var(--color-bg) 30%, var(--bg-cloud-4) 70%, var(--bg-cloud-2) 100%);
+  background-repeat: no-repeat;
 }
 
-/* Star-field overlay */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6), transparent),
-    radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4), transparent),
-    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.3), transparent),
-    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(2px 2px at 15% 85%, rgba(255,255,255,0.4), transparent),
-    radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.3), transparent),
-    radial-gradient(2px 2px at 85% 15%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 40% 30%, rgba(255,255,255,0.4), transparent),
-    radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.3), transparent);
-}
-
+/* Stacking context for the app; Starfield (z-index -1) paints inside it, under the content. */
 #root {
   position: relative;
   z-index: 1;
 }
 
 a {
-  color: var(--rainbow-cyan);
-  text-decoration: underline wavy;
+  color: var(--color-link);
+  text-decoration: underline;
 }
 
 a:hover {
-  color: var(--rainbow-yellow);
+  color: var(--color-link-hover);
 }
 
 img {
@@ -75,10 +55,11 @@ img {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--color-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--rainbow-purple), var(--rainbow-blue), var(--rainbow-green));
-  border-radius: 6px;
+  background: var(--win-grey);
+  border: 2px solid;
+  border-color: var(--bevel-raised-colors);
 }

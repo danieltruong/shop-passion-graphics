@@ -1,0 +1,83 @@
+.status {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 64px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.status__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.status__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 10vw, 56px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.status__lead {
+  margin: 0;
+  color: var(--color-text-3);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.status__order {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.status__reference {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.status__steps {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.status__steps .step-list__item {
+  gap: 6px;
+  padding: 14px;
+  background: #fff;
+}
+
+.status__steps .step-list__number {
+  color: var(--win-link);
+  font-size: 24px;
+}
+
+.status__steps .step-list__title {
+  font-size: 15px;
+}
+
+.status__steps .step-list__text {
+  color: #333;
+  font-size: 14px;
+}
+
+.status__contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .status {
+    padding: 40px 16px 56px;
+  }
+}

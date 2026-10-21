@@ -1,0 +1,316 @@
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== Hero ===== */
+.home-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 48px;
+  padding: 72px 0 56px;
+}
+
+.home-hero__text {
+  display: flex;
+  flex: 1 1 480px;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.home-hero__kicker {
+  margin: 0;
+  color: var(--color-link);
+  font-family: var(--font-flavour);
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.home-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 68px;
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: break-word;
+}
+
+.home-hero__lead {
+  max-width: 520px;
+  margin: 0;
+  color: var(--color-text-3);
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.home-hero__actions .btn {
+  min-height: 52px;
+}
+
+.home-hero__about {
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+/* ===== Featured window ===== */
+.home-featured {
+  position: relative;
+  flex: 1 1 380px;
+  min-width: 0;
+}
+
+.home-featured__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home-featured__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: repeating-linear-gradient(45deg, #2a2a50 0 12px, #232345 12px 24px);
+}
+
+.home-featured__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-featured__price {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.home-featured__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-featured__text {
+  min-width: 0;
+}
+
+.home-featured__name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.home-featured__hook {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: #222;
+  font-size: 14px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.home-featured__link {
+  flex: none;
+  white-space: nowrap;
+}
+
+.home-featured__sparkle {
+  position: absolute;
+  right: -14px;
+  bottom: -22px;
+  color: var(--color-gold);
+  pointer-events: none;
+}
+
+/* ===== Trust tiles ===== */
+.home-trust {
+  padding-bottom: 40px;
+}
+
+.home-trust__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-trust__tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--color-tile);
+  border: 3px ridge var(--win-grey);
+}
+
+.home-trust__icon {
+  flex: none;
+  color: var(--color-gold);
+}
+
+.home-trust__copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-trust__short {
+  display: none;
+}
+
+.home-trust__text {
+  color: var(--color-text-2);
+  font-size: 14px;
+}
+
+/* ===== About teaser ===== */
+.home-about {
+  max-width: 760px;
+  margin: 8px auto 80px;
+}
+
+.home-about .window__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  padding: 22px;
+}
+
+.home-about__frog {
+  flex: none;
+}
+
+.home-about__text {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-about__title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.home-about__text p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* The wide sparkle sits outside the window; keep it inside the viewport on mid widths. */
+@media (max-width: 900px) {
+  .home-featured__sparkle {
+    right: -4px;
+  }
+}
+
+/* Matches the ProductSection breakpoint; the mobile mockup has no Featured window. */
+@media (max-width: 640px) {
+  .home-page {
+    padding: 0 16px;
+  }
+
+  .home-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 32px 0 24px;
+    text-align: center;
+  }
+
+  .home-hero__text {
+    flex-basis: auto;
+    gap: 14px;
+  }
+
+  .home-hero__kicker {
+    font-size: 15px;
+  }
+
+  .home-hero__title {
+    font-size: 42px;
+  }
+
+  .home-hero__lead {
+    max-width: none;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .home-hero__actions {
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  .home-hero__actions .btn {
+    min-height: 50px;
+  }
+
+  .home-hero__about,
+  .home-featured {
+    display: none;
+  }
+
+  .home-trust {
+    padding-bottom: 24px;
+  }
+
+  .home-trust__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .home-trust__tile {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 6px;
+    border-width: 2px;
+    text-align: center;
+  }
+
+  .home-trust__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .home-trust__title,
+  .home-trust__text {
+    display: none;
+  }
+
+  .home-trust__short {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  .home-about {
+    margin-bottom: 48px;
+  }
+
+  .home-about .window__body {
+    padding: 16px;
+  }
+
+  .home-about__text {
+    flex-basis: 100%;
+  }
+}

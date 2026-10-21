@@ -131,14 +131,15 @@ tools: Read, Grep, Glob, Edit, Write, Bash, mcp__mcpjungle__context7__resolve-li
 ## This Repository
 
 - **Plain JSX, no TypeScript.** Do not introduce `.tsx` or type annotations.
-- **No server components, no router.** Single-page client render from `src/main.jsx`.
+- **No server components.** Client render from `src/main.jsx`. Routing react-router 8: `BrowserRouter` in `main.jsx`; tests wrap components with `renderWithRouter` from `src/test/renderWithRouter.jsx`.
 - **State**: cart state is owned by `src/App.jsx` and passed down. Keep it there unless the
   drilling becomes genuinely deep — do not reach for Context speculatively.
 - **Money**: prices are integers in minor units. Never format currency by hand; use
   `src/utils/formatPrice.js`.
-- **Animation**: Framer Motion 14. Variant factories in `src/utils/animations.js` must be
-  hoisted to module constants at their call sites — allocating a fresh variant object per
-  render defeats Framer's reference-based variant propagation.
+- **Animation**: CSS animations change `transform` and `opacity` only. Rainbow drift and
+  marquee keyframes live in `src/theme.css`, `starfield-drift` in `src/components/Starfield.css`.
+  Framer Motion 14 used in `CartDrawer`, `Starfield` (`useScroll`, `useTransform`,
+  `useReducedMotion`) and `ProductPage` (mobile buy bar).
 - **Reduced motion**: `<MotionConfig reducedMotion="user">` wraps the app. Do not add
   animations that bypass it.
 - **Testing**: Vitest + Testing Library. Any change to cart or price logic needs a test.

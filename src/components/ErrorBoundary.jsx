@@ -1,11 +1,9 @@
 import { Component } from 'react'
+import Button from './Button'
 
 /**
- * ErrorBoundary — last line of defence against a white screen.
- *
- * A render-time throw anywhere in the tree (a malformed products.json entry, a bad Framer
- * variant) previously unmounted the entire app with no message. Error boundaries must be class
- * components; there is no hook equivalent.
+ * ErrorBoundary — last line of defence against a white screen. Sits inside BrowserRouter.
+ * Error boundaries must be class components; there is no hook equivalent.
  */
 export default class ErrorBoundary extends Component {
   state = { hasError: false }
@@ -25,9 +23,7 @@ export default class ErrorBoundary extends Component {
       <div className="app-error" role="alert">
         <h1 className="rainbow-text">Something broke</h1>
         <p>Sorry — the shop hit an unexpected error.</p>
-        <button className="btn-buy" onClick={() => window.location.reload()}>
-          Reload the page
-        </button>
+        <Button onClick={() => window.location.reload()}>Reload the page</Button>
       </div>
     )
   }

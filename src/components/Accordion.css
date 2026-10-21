@@ -1,0 +1,81 @@
+.accordion__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.accordion__summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion__heading {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.accordion__chevron {
+  flex-shrink: 0;
+}
+
+.accordion[open] > .accordion__summary .accordion__chevron {
+  transform: rotate(90deg);
+}
+
+.accordion--title {
+  color: var(--win-ink);
+  background: var(--win-grey);
+}
+
+.accordion--title > .accordion__summary {
+  min-height: 44px;
+  padding: 0 12px;
+  color: #fff;
+  background: var(--win-title);
+}
+
+/* Inset white ring, at least 3.9:1 on the title gradient wherever the accordion sits. */
+.accordion--title > .accordion__summary:focus-visible {
+  outline-color: #fff;
+  outline-offset: calc(-1 * (var(--focus-ring-width) + 2px));
+}
+
+.accordion--title .accordion__panel {
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.accordion--sunken {
+  color: var(--win-ink);
+  background: #fff;
+}
+
+.accordion--sunken > .accordion__summary {
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.accordion--sunken .accordion__chevron {
+  color: var(--win-link);
+}
+
+.accordion--sunken > .accordion__summary:focus-visible {
+  outline-offset: calc(-1 * (var(--focus-ring-width) + 2px));
+}
+
+.accordion--sunken .accordion__panel {
+  padding: 0 14px 14px 36px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.accordion__panel a {
+  color: var(--win-link);
+}

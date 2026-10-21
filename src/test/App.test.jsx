@@ -1,174 +1,180 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useNavigate } from 'react-router'
 import App from '../App'
-import { frog, sobble, euroThing, products, mockProductsFetch } from './fixtures'
-import { CART_STORAGE_KEY } from '../utils/cart'
+import { badLink, frog, mockProductsFetch } from './fixtures'
+import { renderWithRouter } from './renderWithRouter'
+
+function renderApp(route = '/', extra = null) {
+  return renderWithRouter(
+    <>
+      <App />
+      {extra}
+    </>,
+    { route },
+  )
+}
+
+function NavProbe() {
+  const navigate = useNavigate()
+  return (
+    <>
+      <button onClick={() => navigate('/about')}>probe push</button>
+      <button onClick={() => navigate(-1)}>probe back</button>
+    </>
+  )
+}
+
+async function renderLoaded(route = '/', list, extra) {
+  fetch.mockResolvedValueOnce(mockProductsFetch(list))
+  const view = renderApp(route, extra)
+  await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement())
+  return view
+}
 
 describe('App', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn())
-    localStorage.clear()
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   describe('catalog loading', () => {
-    it('shows a loading state until the fetch settles', async () => {
-      // Build the pending promise eagerly — creating it inside json() would leave `resolveJson`
-      // unassigned until React actually calls it.
+    it('announces loading until the fetch settles', async () => {
       let resolveJson
       const pending = new Promise((r) => {
         resolveJson = r
       })
       fetch.mockResolvedValueOnce({ ok: true, status: 200, json: () => pending })
-      render(<App />)
+      renderApp()
 
-      // The status role is what makes this announced — the old markup had no role at all.
-      expect(screen.getByRole('status')).toHaveTextContent(/loading/i)
-
-      resolveJson({ products })
-      await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+      expect(screen.getByRole('status')).toHaveTextContent('Loading the shop')
+      resolveJson({ products: [frog] })
+      await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement())
     })
 
     it('renders products after a successful fetch', async () => {
       fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
+      renderApp()
       expect(await screen.findByRole('heading', { name: 'Frog', level: 3 })).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Sobble Cart', level: 3 })).toBeInTheDocument()
     })
 
     it('distinguishes a failed fetch from an empty catalog', async () => {
-      // Both used to render "coming soon", so a CDN outage looked like a shop with no stock.
+      vi.spyOn(console, 'error').mockImplementation(() => {})
       fetch.mockResolvedValueOnce({ ok: false, status: 503 })
-      render(<App />)
+      renderApp()
       const alert = await screen.findByRole('alert')
       expect(alert).toHaveTextContent(/couldn't load the shop/i)
       expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument()
-      expect(within(alert).getByRole('button', { name: /try again/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
     })
 
     it('shows "coming soon" for a genuinely empty catalog', async () => {
-      fetch.mockResolvedValueOnce(mockProductsFetch([]))
-      render(<App />)
-      expect(await screen.findByText(/coming soon/i)).toBeInTheDocument()
+      await renderLoaded('/', [])
+      expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 
     it('survives a network rejection without crashing', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
       fetch.mockRejectedValueOnce(new Error('offline'))
-      render(<App />)
+      renderApp()
       expect(await screen.findByRole('alert')).toBeInTheDocument()
     })
-  })
 
-  describe('cart', () => {
-    async function renderWithProducts(list = products) {
-      fetch.mockResolvedValueOnce(mockProductsFetch(list))
-      render(<App />)
-      await screen.findByRole('heading', { name: list[0].name, level: 3 })
-    }
-
-    it('adds a product and opens the drawer', async () => {
-      await renderWithProducts()
-      await userEvent.click(screen.getAllByRole('button', { name: /add to cart/i })[0])
-      expect(await screen.findByRole('dialog', { name: 'Shopping cart' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /shopping cart, 1 item$/i })).toBeInTheDocument()
-    })
-
-    it('increments rather than duplicating on a second add', async () => {
-      await renderWithProducts()
-      const add = screen.getAllByRole('button', { name: /add to cart/i })[0]
-      await userEvent.click(add)
-      await userEvent.click(add)
-      expect(screen.getByRole('button', { name: /shopping cart, 2 items/i })).toBeInTheDocument()
-      expect(screen.getAllByRole('listitem')).toHaveLength(1)
-    })
-
-    it('refuses to mix currencies and explains why', async () => {
-      await renderWithProducts([frog, euroThing])
-      const adds = screen.getAllByRole('button', { name: /add to cart/i })
-      await userEvent.click(adds[0])
-      await userEvent.click(adds[1])
-      expect(await screen.findByRole('alert')).toHaveTextContent(/cart is in CAD/i)
-      expect(screen.getAllByRole('listitem')).toHaveLength(1)
-    })
-
-    it('removes a line when its quantity reaches zero', async () => {
-      await renderWithProducts()
-      await userEvent.click(screen.getAllByRole('button', { name: /add to cart/i })[0])
-      await screen.findByRole('dialog')
-      await userEvent.click(screen.getByRole('button', { name: /decrease quantity of Frog/i }))
-      expect(await screen.findByText(/your cart is empty/i)).toBeInTheDocument()
-    })
-
-    it('clears the cart', async () => {
-      await renderWithProducts()
-      await userEvent.click(screen.getAllByRole('button', { name: /add to cart/i })[0])
-      await screen.findByRole('dialog')
-      await userEvent.click(screen.getByRole('button', { name: /clear cart/i }))
-      expect(await screen.findByText(/your cart is empty/i)).toBeInTheDocument()
+    it('drops a non-Stripe Payment Link from the catalog', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+      await renderLoaded('/', [badLink])
+      expect(screen.queryByRole('link', { name: /Buy now/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Coming soon: Bad Link' })).toBeDisabled()
     })
   })
 
-  describe('cart persistence', () => {
-    it('restores a stored cart once the catalog loads', async () => {
-      // Stripe's cancel_url returns to `/`, which previously wiped the cart entirely.
-      localStorage.setItem(
-        CART_STORAGE_KEY,
-        JSON.stringify([{ key: sobble.stripePriceId, quantity: 2 }]),
-      )
-      fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
-      expect(
-        await screen.findByRole('button', { name: /shopping cart, 2 items/i }),
-      ).toBeInTheDocument()
+  describe('routes', () => {
+    it.each([
+      ['/', 'graphic design is my passion'],
+      ['/products/frog', 'Frog'],
+      ['/about', 'About the shop'],
+      ['/faq', 'Frequently asked questions'],
+      ['/shipping', 'Shipping & returns'],
+      ['/success', 'Thank you!'],
+      ['/privacy', 'Privacy policy'],
+      ['/nope', 'Page not found'],
+    ])('%s has the h1 "%s"', async (route, heading) => {
+      await renderLoaded(route)
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(heading)
     })
 
-    it('persists an added item', async () => {
-      fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
-      await screen.findByRole('heading', { name: 'Frog', level: 3 })
-      await userEvent.click(screen.getAllByRole('button', { name: /add to cart/i })[0])
-
-      await waitFor(() => {
-        expect(JSON.parse(localStorage.getItem(CART_STORAGE_KEY))).toEqual([
-          { key: 'price_frog', quantity: 1 },
-        ])
-      })
+    it('keeps the skip link first in tab order', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.tab()
+      expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveFocus()
     })
   })
 
-  describe('accessibility', () => {
-    it('renders a skip link as the first focusable element', async () => {
-      fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
-      await screen.findByRole('heading', { name: 'Frog', level: 3 })
-      await userEvent.tab()
-      expect(screen.getByRole('link', { name: /skip to main content/i })).toHaveFocus()
+  describe('scroll and focus on navigation', () => {
+    it('moves to the top and focuses main on a link, but not on back', async () => {
+      const user = userEvent.setup()
+      await renderLoaded('/', undefined, <NavProbe />)
+
+      await user.click(screen.getByRole('button', { name: 'probe push' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('About the shop')
+      expect(window.scrollTo).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('main')).toHaveFocus()
+
+      window.scrollTo.mockClear()
+      await user.click(screen.getByRole('button', { name: 'probe back' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('graphic design is my passion')
+      expect(window.scrollTo).not.toHaveBeenCalled()
+      expect(screen.getByRole('main')).not.toHaveFocus()
     })
+  })
 
-    it('returns focus to the cart button when the drawer closes', async () => {
-      fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
-      await screen.findByRole('heading', { name: 'Frog', level: 3 })
-
-      const cartButton = screen.getByRole('button', { name: /shopping cart/i })
-      await userEvent.click(cartButton)
-      await screen.findByRole('dialog')
-
-      await userEvent.keyboard('{Escape}')
-      // Previously focus landed on <body>, so the next Tab restarted at the top of the page.
-      await waitFor(() => expect(screen.getByRole('button', { name: /shopping cart/i })).toHaveFocus())
-    })
-
-    it('keeps no dialog in the accessibility tree while the cart is closed', async () => {
-      fetch.mockResolvedValueOnce(mockProductsFetch())
-      render(<App />)
-      await screen.findByRole('heading', { name: 'Frog', level: 3 })
+  describe('with the cart disabled', () => {
+    it('shows no cart button, add-to-cart buttons or drawer', async () => {
+      await renderLoaded()
+      expect(screen.queryByRole('button', { name: /^Cart/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /add to cart/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('sells through Payment Links instead', async () => {
+      await renderLoaded()
+      expect(screen.getByRole('link', { name: 'Buy now: Frog' })).toHaveAttribute('href', 'https://buy.stripe.com/test_frog')
+    })
+  })
+
+  describe('pause toggle', () => {
+    it('marks the app as paused and unpaused', async () => {
+      const user = userEvent.setup()
+      const { container } = await renderLoaded()
+      const app = container.querySelector('.app')
+      // jsdom drops the space before the visually hidden " animations"; browsers keep it.
+      const pause = screen.getByRole('button', { name: /^Pause ?animations$/ })
+
+      expect(app).not.toHaveAttribute('data-animations-paused')
+      await user.click(pause)
+      expect(pause).toHaveAttribute('aria-pressed', 'true')
+      expect(app).toHaveAttribute('data-animations-paused', 'true')
+      await user.click(pause)
+      expect(app).not.toHaveAttribute('data-animations-paused')
+    })
+  })
+
+  describe('header search', () => {
+    it('filters the home page grid from another page', async () => {
+      const user = userEvent.setup()
+      await renderLoaded('/about')
+      await user.type(screen.getByRole('searchbox', { name: 'Search products' }), 'sobble{Enter}')
+      const shop = await screen.findByRole('region', { name: 'Shop' })
+      expect(within(shop).getByText(/Results for/)).toHaveTextContent('Results for “sobble”')
+      expect(within(shop).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Sobble Cart'])
     })
   })
 })

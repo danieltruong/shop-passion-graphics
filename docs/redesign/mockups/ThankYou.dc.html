@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order confirmed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}a:hover{color:#ffd700}
+.rainbow{background:linear-gradient(90deg,#ff5c5c,#ff9a1f,#ffd700,#39ff14,#00bfff,#b98cff,#ff69b4,#ff5c5c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+</style>
+</helmet>
+<div style="background: radial-gradient(ellipse at 50% 20%, rgba(90,0,150,0.35) 0%, transparent 50%), linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%); color: #ffffff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; min-height: 100vh">
+
+<dc-import name="SiteHeader" active="none" cart-count="0" hint-size="100%,150px"></dc-import>
+
+<main style="max-width: 760px; margin: 0 auto; padding: 64px 24px 80px; display: flex; flex-direction: column; gap: 32px">
+<div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+<svg width="110" height="96" viewBox="0 0 64 56" aria-hidden="true"><circle cx="18" cy="16" r="12" fill="#39c25a"/><circle cx="46" cy="16" r="12" fill="#39c25a"/><ellipse cx="32" cy="36" rx="28" ry="18" fill="#39c25a"/><circle cx="18" cy="16" r="6" fill="#fff"/><circle cx="46" cy="16" r="6" fill="#fff"/><circle cx="19" cy="17" r="3" fill="#111"/><circle cx="47" cy="17" r="3" fill="#111"/><path d="M16 36 Q32 52 48 36" stroke="#14532d" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+<h1 class="rainbow" style="margin: 0; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 56px; font-weight: 700">Thank you!</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.5; color: #dcdcf2">Your order is in. A receipt from Stripe is on its way to your email.</p>
+</div>
+
+<div class="bevel" style="background: #c0c0c0; color: #000; padding: 3px">
+<div style="background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 6px 8px; font-size: 15px; font-weight: 700">Order [#ORDER-NUMBER]</div>
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 18px">
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+<li class="sunken" style="background: #fff; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 24px; color: #000080">1</span>
+<strong style="font-size: 15px">Order received</strong>
+<span style="font-size: 14px; color: #333">Payment confirmed.</span>
+</li>
+<li class="sunken" style="background: #fff; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 24px; color: #000080">2</span>
+<strong style="font-size: 15px">Packed &amp; shipped</strong>
+<span style="font-size: 14px; color: #333">Within 3–5 business days. You'll get tracking by email.</span>
+</li>
+<li class="sunken" style="background: #fff; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: Impact, Anton, sans-serif; font-size: 24px; color: #000080">3</span>
+<strong style="font-size: 15px">Delivered</strong>
+<span style="font-size: 14px; color: #333">Depends on where you are. <a href="Shipping.dc.html" style="color: #000080">See delivery times</a>.</span>
+</li>
+</ol>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px">
+<span>Questions about your order? <a href="mailto:[email]" style="color: #000080">[your email]</a></span>
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; min-height: 50px; padding: 0 24px; font-family: Impact, Anton, sans-serif; font-size: 18px; letter-spacing: 1.5px; color: #000; text-decoration: none; background: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%); border: 3px outset #ffd700; box-shadow: 3px 3px 0 rgba(0,0,0,0.45)">KEEP SHOPPING</a>
+</div>
+</div>
+</div>
+</main>
+
+<dc-import name="SiteFooter" hint-size="100%,400px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1250}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

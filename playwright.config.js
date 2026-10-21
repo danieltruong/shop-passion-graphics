@@ -15,26 +15,22 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
+  // Tests tagged @mobile or @desktop cover layout that exists at one width only.
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'desktop',
+      grepInvert: /@mobile/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
     {
-      // Same specs under prefers-reduced-motion, so the gating in theme.css and
-      // <MotionConfig reducedMotion="user"> is exercised, not assumed.
-      name: 'chromium-reduced-motion',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Must stay under contextOptions: @playwright/test 1.62.1 silently ignores top-level
-        // `reducedMotion`, so matchMedia reports false and the tests prove nothing.
-        contextOptions: { reducedMotion: 'reduce' },
-      },
+      name: 'mobile',
+      grepInvert: /@desktop/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 } },
     },
   ],
 
   webServer: {
-    command: 'yarn build && yarn preview',
+    command: 'yarn build && yarn preview --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

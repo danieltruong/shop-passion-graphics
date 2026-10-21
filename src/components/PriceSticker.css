@@ -1,0 +1,22 @@
+.price-sticker {
+  display: inline-block;
+  transform: rotate(var(--sticker-rotate, 5deg));
+  color: #000;
+  background: var(--sticker-bg);
+  border: 3px outset var(--color-gold);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  font-family: var(--font-accent);
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.price-sticker--md {
+  padding: 4px 10px;
+  font-size: 19px;
+}
+
+.price-sticker--lg {
+  padding: 6px 16px;
+  font-size: 30px;
+}

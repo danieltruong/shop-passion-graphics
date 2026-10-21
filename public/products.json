@@ -7,6 +7,13 @@
       "price": 10000,
       "currency": "CAD",
       "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfY0p4aTZKak5PWUFDODY3UEdaejJKQTlF00iKIKCCS0",
+      "images": [
+        "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfY0p4aTZKak5PWUFDODY3UEdaejJKQTlF00iKIKCCS0"
+      ],
+      "slug": "frog",
+      "category": null,
+      "badge": null,
+      "paymentLink": null,
       "active": true,
       "stripeProductId": "prod_UahrSUIPvwuJ6i",
       "stripePriceId": "price_1TbWRQ5FIOXpGKH62CpWdj6X"
@@ -18,11 +25,18 @@
       "price": 3499,
       "currency": "CAD",
       "imageUrl": "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfUmkyZ0JpRmlMcG1OcnpMR2piNjVtdlhl00swQNhZ1i",
+      "images": [
+        "https://files.stripe.com/links/MDB8YWNjdF8xVGJEMXg1RklPWHBHS0g2fGZsX3Rlc3RfUmkyZ0JpRmlMcG1OcnpMR2piNjVtdlhl00swQNhZ1i"
+      ],
+      "slug": "sobble-cart",
+      "category": null,
+      "badge": null,
+      "paymentLink": "https://buy.stripe.com/test_8x2fZabpLdNq1Mdak193y00",
       "active": true,
       "stripeProductId": "prod_UagVOmlTQPME17",
       "stripePriceId": "price_1TbV8k5FIOXpGKH60y2koJhi"
     }
   ],
-  "generated": "2026-07-25T05:08:33.982Z",
+  "generated": "2026-10-21T05:27:58.774Z",
   "source": "Stripe API"
 }

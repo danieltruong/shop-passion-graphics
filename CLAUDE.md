@@ -3,7 +3,7 @@
 React storefront for graphics with Stripe Checkout. Static frontend on S3/CloudFront; checkout
 is AWS Lambda behind API Gateway (SAM, region `ca-central-1`).
 
-Stack: React 19 + Vite 8, **plain JSX, no TypeScript**; Framer Motion 14; Vitest 5 + Testing
+Stack: React 19 + Vite 8, **plain JSX, no TypeScript**; react-router 8; Framer Motion 14; Vitest 5 + Testing
 Library (jsdom); Stripe 23 (Checkout Sessions, `mode: 'payment'`); AWS SAM → Lambda + HTTP API.
 
 ## Commands
@@ -55,11 +55,17 @@ Yarn 4 everywhere, Lambda included: one root `yarn.lock`, no `package-lock.json`
 
 ## Architecture
 
+- **Layout**: pages in `src/pages/`, shared UI in `src/components/`, copy and placeholders in
+  `src/content/site.js`, money formatted as `$12.00 CAD` by `src/utils/formatPrice.js`.
 - **Catalog**: `scripts/generate-products.js` reads Stripe API, writes
   `public/products.json`. Run by hand only; committed catalog ships. `deploy.yml` copies it
-  into Lambda with `yarn sync:catalog`.
-- **Cart**: state owned by `src/App.jsx`, passed to `Header`/`CartIcon` and `CartDrawer`, kept
+  into Lambda with `yarn sync:catalog`. Each entry has `slug`, `category`, `badge`
+  (`new` | `sold_out` | null), `images` (up to 8) and `paymentLink` (`buy.stripe.com` only),
+  taken from Stripe product metadata and active Payment Links.
+- **Cart**: state owned by `src/App.jsx`, passed to `SiteHeader` and `CartDrawer`, kept
   in `localStorage` so Stripe cancel redirect does not wipe it. Lines keyed on `stripePriceId`.
+  `CART_ENABLED` in `src/features.js` is `false` in Phase 1: the drawer is unmounted and
+  product pages link to the Payment Link.
 - **Checkout**: `src/components/CartDrawer.jsx` POSTs `{cart: [{priceId, quantity}]}` and
   redirects to returned Stripe URL.
 - **Checkout function**: logic lives once in `lambda/create-checkout/checkout-core.mjs`.
@@ -108,9 +114,10 @@ frontend with the stack's API URL and syncs to S3.
   Access Control). Live URL is stack's `SiteUrl` output.
 - **`deploy.yml` does not deploy `infra/bootstrap-deploy-role.yaml`.** After changing it, run
   `bash infra/bootstrap.sh` with admin credentials or the next deploy fails mid-changeset.
-- **SPA routing is CloudFront's:** `DefaultRootObject` and `CustomErrorResponses`. `/success`
-  (Stripe's return URL) deep link handled by `src/App.jsx`; map 403 as well as 404, since
-  private bucket answers missing key with `AccessDenied`.
+- **SPA routing** is `react-router` in `src/App.jsx`: routes `/`, `/products/:slug`, `/about`,
+  `/faq`, `/shipping`, `/success` (Stripe's return URL), `/privacy` and `*`. CloudFront
+  `DefaultRootObject` and `CustomErrorResponses` serve `index.html` for deep links; map 403 as
+  well as 404, since private bucket answers missing key with `AccessDenied`.
 
 ## MCP tooling
 

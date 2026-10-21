@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FAQ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0d0d1a}
+a{color:#7fe9ff}a:hover{color:#ffd700}
+.rainbow{background:linear-gradient(90deg,#ff5c5c,#ff9a1f,#ffd700,#39ff14,#00bfff,#b98cff,#ff69b4,#ff5c5c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.bevel{border:2px solid;border-color:#ffffff #404040 #404040 #ffffff;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.sunken{border:2px solid;border-color:#404040 #ffffff #ffffff #404040;box-shadow:inset 1px 1px #808080}
+details>summary{cursor:pointer;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details[open]>summary .chev{transform:rotate(90deg)}
+.topic{color:#000;text-decoration:none}.topic:hover{background:#000080;color:#fff}
+</style>
+</helmet>
+<div style="background: radial-gradient(ellipse at 85% 15%, rgba(0,40,140,0.4) 0%, transparent 45%), linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 35%, #1a0a2e 75%, #16213e 100%); color: #ffffff; font-family: Tahoma, Verdana, 'Segoe UI', sans-serif; min-height: 100vh">
+
+<dc-import name="SiteHeader" active="faq" cart-count="2" hint-size="100%,150px"></dc-import>
+
+<main style="max-width: 1100px; margin: 0 auto; padding: 56px 24px 80px">
+<h1 class="rainbow" style="margin: 0 0 8px; text-align: center; font-family: Papyrus, 'Segoe Print', fantasy; font-size: 56px; font-weight: 700">Frequently asked questions</h1>
+<p style="margin: 0 0 36px; text-align: center; font-size: 17px; color: #d6d6ee">Can't find it here? Email <a href="mailto:[email]">[your email]</a>.</p>
+
+<div class="bevel" style="background: #c0c0c0; color: #000; padding: 3px">
+<div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 6px 8px; font-size: 15px; font-weight: 700">
+<span>Help topics</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 12px">
+
+<nav aria-label="FAQ topics" class="sunken" style="flex: 1 1 220px; background: #fff; padding: 8px; display: flex; flex-direction: column; gap: 2px; align-self: flex-start">
+<a href="#orders" class="topic" style="display: flex; align-items: center; min-height: 40px; padding: 0 10px; font-size: 15px">Orders &amp; payment</a>
+<a href="#shipping" class="topic" style="display: flex; align-items: center; min-height: 40px; padding: 0 10px; font-size: 15px">Shipping</a>
+<a href="#returns" class="topic" style="display: flex; align-items: center; min-height: 40px; padding: 0 10px; font-size: 15px">Returns &amp; exchanges</a>
+<a href="#products" class="topic" style="display: flex; align-items: center; min-height: 40px; padding: 0 10px; font-size: 15px">Products</a>
+</nav>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 22px">
+
+<section id="orders" aria-labelledby="h-orders" style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-orders" style="margin: 0 0 8px; font-size: 19px">Orders &amp; payment</h2>
+<details class="sunken" style="background: #fff" open>
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>How do I pay?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Checkout runs on Stripe. You can pay with major credit cards, Visa or Mastercard debit, and Apple Pay or Google Pay on supported devices. We never see or store your card details.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Can I change or cancel my order?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Email us as soon as you can. If your order hasn't shipped yet, we'll change it or cancel it with a full refund.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Which currency are prices in?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">All prices are in Canadian dollars (CAD). If your card is in another currency, your bank handles the conversion and may charge a small fee.</div>
+</details>
+</section>
+
+<section id="shipping" aria-labelledby="h-shipping" style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-shipping" style="margin: 0 0 8px; font-size: 19px">Shipping</h2>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>How long does shipping take?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Orders are packed by hand and ship within 3–5 business days. Delivery times by region are on the <a href="Shipping.dc.html" style="color: #000080">shipping page</a>.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Do you ship internationally?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Right now we ship within Canada and to the US. If you're somewhere else, email us and we'll see what we can do.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>How do I track my order?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">You'll get a tracking link by email when your order ships.</div>
+</details>
+</section>
+
+<section id="returns" aria-labelledby="h-returns" style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-returns" style="margin: 0 0 8px; font-size: 19px">Returns &amp; exchanges</h2>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Can I return something?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Yes. Unused items in their original condition can be returned within 14 days of delivery. Custom and personalized pieces are final sale. Details on the <a href="Shipping.dc.html" style="color: #000080">returns page</a>.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>My order arrived damaged. What now?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Sorry about that! Email a photo to [your email] within 7 days of delivery and we'll send a replacement or refund you. No need to send it back.</div>
+</details>
+</section>
+
+<section id="products" aria-labelledby="h-products" style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-products" style="margin: 0 0 8px; font-size: 19px">Products</h2>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Will sold-out items come back?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Some do. Tap "Notify me" on the product, or join the mailing list.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Why does mine look a little different from the photo?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Everything is made by hand, so small differences in colour and shape are normal. No two are exactly alike.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Do you take custom orders?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Sometimes! Email [your email] with what you have in mind. Custom pieces are final sale.</div>
+</details>
+<details class="sunken" style="background: #fff">
+<summary style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; font-weight: 700; font-size: 15px"><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="#000080" aria-hidden="true" style="transition: transform 0.15s"><path d="M8 4l10 8-10 8z"/></svg>Is graphic design really your passion?</summary>
+<div style="padding: 0 14px 14px 36px; font-size: 15px; line-height: 1.6">Yes.</div>
+</details>
+</section>
+</div>
+</div>
+</div>
+</main>
+
+<dc-import name="SiteFooter" hint-size="100%,400px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1750}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

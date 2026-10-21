@@ -48,7 +48,18 @@ describe('formatPrice', () => {
     expect(formatPrice(null, 'CAD')).toBe('')
   })
 
-  it('defaults to USD when no currency is given', () => {
-    expect(formatPrice(500)).toContain('5.00')
+  it('appends the ISO code to the narrow symbol', () => {
+    expect(formatPrice(1200, 'CAD')).toBe('$12.00 CAD')
+    expect(formatPrice(1500, 'JPY')).toBe('¥1,500 JPY')
+    expect(formatPrice(1200, 'cad')).toBe('$12.00 CAD')
+  })
+
+  it('returns an empty string when the currency is missing', () => {
+    expect(formatPrice(500)).toBe('')
+    expect(formatPrice(500, '')).toBe('')
+  })
+
+  it('returns an empty string for an unknown currency code instead of throwing', () => {
+    expect(formatPrice(500, 'NOTACODE')).toBe('')
   })
 })

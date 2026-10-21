@@ -1,0 +1,41 @@
+.starburst {
+  position: absolute;
+  top: var(--starburst-offset);
+  left: var(--starburst-offset);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--starburst-size);
+  height: var(--starburst-size);
+  transform: rotate(-12deg);
+  clip-path: polygon(
+    50% 0%, 61% 15%, 79% 9%, 79% 27%, 97% 32%, 87% 48%, 97% 65%, 79% 70%, 79% 89%, 61% 84%,
+    50% 100%, 39% 84%, 21% 89%, 21% 70%, 3% 65%, 13% 48%, 3% 32%, 21% 27%, 21% 9%, 39% 15%
+  );
+  /* Black on #ff2d95 is about 6.1:1; white would be about 3.4:1. */
+  color: #000;
+  background: var(--badge-bg);
+  font-family: var(--font-accent);
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.starburst--md {
+  --starburst-size: 64px;
+  --starburst-offset: -14px;
+  font-size: 14px;
+}
+
+.starburst--lg {
+  --starburst-size: 84px;
+  --starburst-offset: -18px;
+  font-size: 18px;
+}
+
+.starburst--xl {
+  --starburst-size: 96px;
+  --starburst-offset: -20px;
+  font-size: 20px;
+}
