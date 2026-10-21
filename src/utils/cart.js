@@ -66,9 +66,13 @@ export function cartCurrency(cart) {
   return cart[0]?.product.currency ?? 'USD'
 }
 
-/** Total unit count across all lines — the cart-icon badge. */
+/** Total unit count across all lines, shown in the header and drawer title. */
 export function totalItems(cart) {
   return cart.reduce((sum, item) => sum + item.quantity, 0)
+}
+
+export function itemsLabel(count) {
+  return `${count} item${count === 1 ? '' : 's'}`
 }
 
 // Stored lines are re-validated against the live catalog: an archived price would

@@ -53,7 +53,7 @@ describe('rendering', () => {
 
   it('renders a labelled modal dialog when open', () => {
     renderDrawer()
-    const dialog = screen.getByRole('dialog', { name: 'Shopping cart' })
+    const dialog = screen.getByRole('dialog', { name: 'Your cart (1 item)' })
     expect(dialog).toHaveAttribute('aria-modal', 'true')
   })
 
@@ -61,6 +61,32 @@ describe('rendering', () => {
     renderDrawer({ cart: [] })
     expect(screen.getByText(/your cart is empty/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /checkout/i })).not.toBeInTheDocument()
+  })
+
+  it('counts units, not lines, in the title', () => {
+    renderDrawer({ cart: [line(frog, 1), line(sobble, 2)] })
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Your cart (3 items)')
+  })
+
+  it('leaves the count out of the title when empty', () => {
+    renderDrawer({ cart: [] })
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/^Your cart$/)
+  })
+
+  it('counts units, not lines, in the status region', () => {
+    renderDrawer({ cart: [line(frog, 1), line(sobble, 2)] })
+    expect(screen.getByRole('status')).toHaveTextContent('Cart has 3 items, subtotal $169.98 CAD')
+  })
+
+  it('reports an empty cart in the status region', () => {
+    renderDrawer({ cart: [] })
+    expect(screen.getByRole('status')).toHaveTextContent('Cart is empty')
+  })
+
+  it('shows the placeholder shipping line and no progress bar while no threshold is set', () => {
+    renderDrawer()
+    expect(screen.getByText('Free shipping in Canada over $[XX].')).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 })
 

@@ -107,3 +107,11 @@ export function relatedTo(products, product, limit = 4) {
   const rest = others.filter((p) => !same.includes(p))
   return [...same, ...rest].slice(0, limit)
 }
+
+/** Which action a product gets: 'sold-out', 'cart', 'link' (Payment Link), or null for "Coming soon". */
+export function buyMode(product, onAddToCart) {
+  if (product.badge === 'sold_out') return 'sold-out'
+  if (onAddToCart && product.stripePriceId) return 'cart'
+  if (!onAddToCart && product.paymentLink) return 'link'
+  return null
+}

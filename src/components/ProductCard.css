@@ -53,7 +53,7 @@
   display: flex;
   flex-direction: column;
   background: var(--color-panel);
-  border: var(--border-gold);
+  border: var(--border-outset-gold);
 }
 
 /* Body comes first in the DOM so the name is read before price and badges. */
@@ -62,7 +62,7 @@
   order: -1;
   aspect-ratio: 1 / 1;
   background: var(--color-bg);
-  border-bottom: var(--border-bevel);
+  border-bottom: 4px ridge var(--win-grey);
 }
 
 .shop-card__img {

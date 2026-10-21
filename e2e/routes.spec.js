@@ -55,10 +55,12 @@ test.describe('product page', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Frog')
   })
 
-  test('"Buy now" goes to the product Payment Link', async ({ page }) => {
+  test('"Add to cart" adds the product without opening the drawer', async ({ page }) => {
     await gotoReady(page, '/products/frog')
-    const cta = page.locator('.product__info').getByRole('link', { name: 'Buy now', exact: true })
-    await expect(cta).toHaveAttribute('href', 'https://buy.stripe.com/test_x')
+    await page.locator('.product__info').getByRole('button', { name: 'Add to cart', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Cart, 1 item' })).toBeVisible()
+    await expect(page.getByRole('status').filter({ hasText: 'Added Frog to cart. Cart has 1 item.' })).toBeAttached()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
   test('a sold-out product offers "Email me when it\'s back" instead of buying', async ({ page }) => {
@@ -143,7 +145,7 @@ test.describe('mobile buy bar @mobile', () => {
     )
 
     await expect(bar).toBeVisible()
-    await expect(bar.getByRole('link', { name: 'Buy now' })).toHaveAttribute('href', 'https://buy.stripe.com/test_x')
+    await expect(bar.getByRole('button', { name: 'Add to cart' })).toBeVisible()
     const padding = await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingBottom)
     expect(parseFloat(padding)).toBeGreaterThanOrEqual(100)
 

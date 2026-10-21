@@ -1,7 +1,13 @@
 // Shared site copy from docs/redesign/HANDOFF.md and its mockups. Bracketed values are
 // placeholders the owners fill in once here; do not invent them.
 
+import { formatPrice } from '../utils/formatPrice'
+
 export const SITE_NAME = 'shop.passion.graphics'
+
+// CAD minor units; null until the owners set it, which hides the cart's progress bar and shows
+// the bracketed placeholder wherever the threshold is printed.
+const FREE_SHIPPING_THRESHOLD_CENTS = null
 
 export const placeholders = {
   ownerNames: '[your names]',
@@ -10,7 +16,8 @@ export const placeholders = {
   emailHref: 'mailto:[email]',
   instagram: '[Instagram]',
   instagramHref: '[instagram]',
-  freeShippingThreshold: '$[XX]',
+  freeShippingThreshold:
+    typeof FREE_SHIPPING_THRESHOLD_CENTS === 'number' ? formatPrice(FREE_SHIPPING_THRESHOLD_CENTS, 'CAD') : '$[XX]',
   shippingCost: '$[00]',
   deliveryTime: '[X–Y] business days',
   orderNumber: '[#ORDER-NUMBER]',
@@ -44,6 +51,7 @@ export const policies = {
   damageReportDays: 7,
   refundDays: 5,
   replyTime: '2 business days',
+  freeShippingThresholdCents: FREE_SHIPPING_THRESHOLD_CENTS,
 }
 
 export const marquee = [

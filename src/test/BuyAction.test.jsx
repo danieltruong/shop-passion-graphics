@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import BuyAction from '../components/BuyAction'
 import { frog, soldOut, unpriced } from './fixtures'
@@ -17,7 +17,42 @@ describe('BuyAction', () => {
     const onAddToCart = vi.fn()
     renderWithRouter(<BuyAction product={frog} onAddToCart={onAddToCart} />)
     await user.click(screen.getByRole('button', { name: 'Add to cart' }))
-    expect(onAddToCart).toHaveBeenCalledWith(frog)
+    expect(onAddToCart).toHaveBeenCalledWith(frog, expect.anything())
+  })
+
+  describe('"Added" confirmation', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+      vi.unstubAllGlobals()
+    })
+
+    async function clickAdd(accepted) {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      // Testing Library only drains its own setTimeout(0) under fake timers when it sees `jest`.
+      vi.stubGlobal('jest', { advanceTimersByTime: (ms) => vi.advanceTimersByTime(ms) })
+      const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) })
+      renderWithRouter(<BuyAction product={frog} onAddToCart={() => accepted} />)
+      await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+    }
+
+    it('shows "Added" after a successful add, keeping the button name', async () => {
+      await clickAdd(true)
+      expect(screen.getByText('Added')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Add to cart' })).toBeInTheDocument()
+    })
+
+    it('hides "Added" again after 1.5 seconds', async () => {
+      await clickAdd(true)
+      act(() => vi.advanceTimersByTime(1499))
+      expect(screen.getByText('Added')).toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(1))
+      expect(screen.queryByText('Added')).not.toBeInTheDocument()
+    })
+
+    it('shows nothing when the cart refuses the add', async () => {
+      await clickAdd(false)
+      expect(screen.queryByText('Added')).not.toBeInTheDocument()
+    })
   })
 
   it('links to the Payment Link when there is no cart', () => {

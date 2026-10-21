@@ -74,6 +74,30 @@ describe('ProductPage', () => {
       expect(screen.queryByText(/In stock/)).not.toBeInTheDocument()
     })
 
+    it('offers Add to cart with the in-stock line when a cart is wired', async () => {
+      const user = userEvent.setup()
+      const onAddToCart = vi.fn()
+      renderProduct('frog', { products: [frog], onAddToCart })
+      expect(screen.getByText('In stock, ships in 3–5 business days')).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Buy now' })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+      expect(onAddToCart).toHaveBeenCalledWith(expect.objectContaining({ name: 'Frog' }), expect.anything())
+    })
+
+    it('shows Coming soon and no stock line with a cart but no Stripe price', () => {
+      renderProduct('frog', { products: [{ ...frog, stripePriceId: null }], onAddToCart: vi.fn() })
+      expect(screen.getByRole('button', { name: 'Coming soon' })).toBeDisabled()
+      expect(screen.queryByText(/In stock/)).not.toBeInTheDocument()
+    })
+
+    it('lets related products be added to the cart', async () => {
+      const user = userEvent.setup()
+      const onAddToCart = vi.fn()
+      renderProduct('frog', { onAddToCart })
+      await user.click(screen.getByRole('button', { name: 'Add to cart: Sobble Cart' }))
+      expect(onAddToCart).toHaveBeenCalledWith(expect.objectContaining({ name: 'Sobble Cart' }), expect.anything())
+    })
+
     it('shows the price in the catalog currency', () => {
       renderProduct('mystery-item')
       expect(screen.getByText('$5.00 CAD')).toBeInTheDocument()
@@ -108,6 +132,19 @@ describe('ProductPage', () => {
       await waitFor(() => expect(screen.getAllByText('Buy now')).toHaveLength(2))
       expect(screen.getAllByText('Buy now')[1]).toHaveAttribute('href', 'https://buy.stripe.com/test_frog')
       expect(screen.getByText('$100.00 CAD', { selector: '.product-bar__price' })).toBeInTheDocument()
+    })
+
+    it('repeats Add to cart when a cart is wired', async () => {
+      stubCtaScrolledPast()
+      renderProduct('frog', { products: [frog], onAddToCart: vi.fn() })
+      await waitFor(() => expect(screen.getAllByText('Add to cart')).toHaveLength(2))
+    })
+
+    it('is not shown with a cart for a product that has only a Payment Link', async () => {
+      stubCtaScrolledPast()
+      renderProduct('frog', { products: [{ ...frog, stripePriceId: null }], onAddToCart: vi.fn() })
+      await act(async () => {})
+      expect(screen.getAllByText('Coming soon')).toHaveLength(1)
     })
 
     it('stays hidden while the main CTA is on screen', async () => {

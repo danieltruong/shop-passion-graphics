@@ -1,0 +1,30 @@
+.buy-action {
+  position: relative;
+}
+
+/* Fades rather than unmounts, so the button keeps its width and its accessible name. */
+.buy-action__label.is-hidden {
+  opacity: 0;
+}
+
+.buy-action__added {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.buy-action__spark {
+  position: absolute;
+  display: flex;
+  color: var(--color-gold);
+  filter: drop-shadow(0 0 1px #000);
+  pointer-events: none;
+}
+
+.buy-action__spark--1 { top: -9px; left: 12%; }
+.buy-action__spark--2 { top: -7px; right: 10%; }
+.buy-action__spark--3 { bottom: -8px; right: 24%; }
+.buy-action__spark--4 { bottom: -6px; left: 30%; }

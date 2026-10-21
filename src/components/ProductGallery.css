@@ -9,7 +9,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   background: repeating-linear-gradient(45deg, #2a2a50 0 12px, #232345 12px 24px);
-  border: 4px outset var(--color-gold);
+  border: var(--border-outset-gold);
 }
 
 .gallery__img {
