@@ -66,9 +66,9 @@ Remove `--font-body: Comic Sans` as the body default; body becomes Tahoma.
 
 ## Pages / routes
 
-The app is currently a single page. Add a lightweight router (e.g. `react-router`)
-and keep the S3/CloudFront SPA fallback working (CloudFront must serve
-`index.html` for unknown paths — check the distribution's error-page config).
+`react-router` in `src/App.jsx` serves these routes. The S3/CloudFront SPA fallback
+keeps working because CloudFront serves `index.html` for unknown paths
+(`CustomErrorResponses` in `infra/template.yaml`).
 
 | Route | Mockup |
 |---|---|
@@ -84,9 +84,9 @@ All pages must work at 390px wide (mobile boards show the intent).
 
 ## Product data
 
-`scripts/generate-products.js` already writes `name, description, price (cents),
-currency, imageUrl, paymentLink, productId`. The design also needs, from Stripe
-product **metadata** (add these in the Stripe dashboard and map them in the script):
+`scripts/generate-products.js` writes `name, description, price (cents), currency,
+imageUrl, images, slug, category, badge, paymentLink, productId`. The design reads
+these from Stripe product **metadata** and fields (set metadata in the Stripe dashboard):
 
 - `category` — for the filter chips
 - `badge` — `new` | `sold_out` | empty
@@ -135,8 +135,8 @@ page (mailing list + Stripe) linked from the footer.
 Wrap the app in `<MotionConfig reducedMotion="user">`. With reduced motion:
 no marquee scroll, no gradient drift, no entrances/loops; state changes instant.
 
-Retune / remove in `src/utils/animations.js`, `theme.css`, components:
-- Rainbow drift 3s → ~12s, logo + H1 only. Marquee 15s → ~40s, pause on hover.
+Retune / remove in `theme.css` and components:
+- Rainbow drift 3s → ~12s, logo + H1 only. Marquee 15s → 18s, pause on hover.
 - Delete: spinning `✦` decorations, floating/wobbling emoji, blinking footer text,
   `scaleIn` bouncy section titles, whole-card `scale: 1.03` hover.
 
@@ -159,7 +159,8 @@ Add:
 - Success page: frog hops twice + a few stars once on load; steps fade in in sequence.
 
 Rules: 120ms micro, 200–250ms UI, ~400ms entrances; ease-out in, ease-in out;
-animate only transform/opacity; ≤2–3 looping animations visible at once.
+animate only transform/opacity; ≤2–3 looping animations visible at once. The
+header's "Pause animations" toggle stops every loop (WCAG 2.2.2).
 
 ## Accessibility checks
 

@@ -1,0 +1,74 @@
+.starfield {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Rendered inside #root's stacking context: -1 paints under in-flow content, above the body gradient. */
+  z-index: -1;
+}
+
+/* Parallax lifts the layer by up to one tile and the drift moves the stars one more, hence two overhangs. */
+.starfield__layer {
+  position: absolute;
+  inset: 0 0 calc(-1 * var(--tile)) 0;
+  will-change: transform;
+}
+
+.starfield__stars {
+  position: absolute;
+  inset: 0 calc(-1 * var(--tile)) calc(-1 * var(--tile)) 0;
+  background-size: var(--tile) var(--tile);
+  will-change: transform;
+}
+
+/* Solid core (far 2px, mid 3px, near 4px across) plus a faint halo; dots stay 5% in from tile edges so halos never clip. */
+.starfield__stars--far {
+  background-image:
+    radial-gradient(2px 2px at 12% 18%, rgba(255, 255, 255, 0.75) 0 1px, transparent),
+    radial-gradient(2px 2px at 63% 47%, rgba(255, 255, 255, 0.7) 0 1px, transparent),
+    radial-gradient(2px 2px at 38% 82%, rgba(255, 255, 255, 0.8) 0 1px, transparent),
+    radial-gradient(2px 2px at 86% 9%, rgba(255, 255, 255, 0.7) 0 1px, transparent);
+}
+
+.starfield__stars--mid {
+  background-image:
+    radial-gradient(7px 7px at 27% 34%, rgba(255, 255, 255, 0.85) 0 1.5px, rgba(255, 255, 255, 0.3) 2.5px, rgba(255, 255, 255, 0.06) 4.5px, transparent),
+    radial-gradient(7px 7px at 78% 71%, rgba(255, 255, 255, 0.8) 0 1.5px, rgba(255, 255, 255, 0.28) 2.5px, rgba(255, 255, 255, 0.06) 4.5px, transparent),
+    radial-gradient(7px 7px at 52% 89%, rgba(255, 255, 255, 0.85) 0 1.5px, rgba(255, 255, 255, 0.3) 2.5px, rgba(255, 255, 255, 0.06) 4.5px, transparent);
+}
+
+.starfield__stars--near {
+  background-image:
+    radial-gradient(10px 10px at 71% 22%, rgba(255, 255, 255, 0.95) 0 2px, rgba(255, 255, 255, 0.35) 3px, rgba(255, 255, 255, 0.08) 6px, transparent),
+    radial-gradient(10px 10px at 19% 63%, rgba(255, 255, 255, 0.95) 0 2px, rgba(255, 255, 255, 0.35) 3px, rgba(255, 255, 255, 0.08) 6px, transparent),
+    radial-gradient(10px 10px at 88% 84%, rgba(255, 255, 255, 0.9) 0 2px, rgba(255, 255, 255, 0.3) 3px, rgba(255, 255, 255, 0.08) 6px, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .starfield__stars {
+    animation: starfield-drift linear infinite;
+  }
+
+  .starfield__stars--far {
+    animation-duration: 120s;
+  }
+
+  .starfield__stars--mid {
+    animation-duration: 80s;
+  }
+
+  .starfield__stars--near {
+    animation-duration: 50s;
+  }
+
+  /* Exactly one tile, so the last frame matches the first. */
+  @keyframes starfield-drift {
+    to { transform: translate(calc(-1 * var(--tile)), calc(-1 * var(--tile))); }
+  }
+}
+
+@media (forced-colors: active) {
+  .starfield {
+    display: none;
+  }
+}

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
+import { BrowserRouter } from 'react-router'
 import './theme.css'
 import './index.css'
 import './App.css'
@@ -17,9 +18,11 @@ createRoot(document.getElementById('root'), {
     {/* reducedMotion="user" makes every Framer animation in the app honour the OS
         preference at once — springs, whileHover, and whileInView included. */}
     <MotionConfig reducedMotion="user">
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </BrowserRouter>
     </MotionConfig>
   </StrictMode>,
 )

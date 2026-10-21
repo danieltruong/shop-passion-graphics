@@ -1,0 +1,70 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 18px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.btn--primary {
+  min-height: 46px;
+  color: #000;
+  background: var(--btn-primary-bg);
+  border: 3px outset var(--color-gold);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  font-family: var(--font-accent);
+  font-size: 17px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.btn--primary.btn--lg {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+}
+
+.btn--primary.btn--xl {
+  min-height: 58px;
+  padding: 0 28px;
+  border-width: 4px;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+
+.btn--primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.btn--win {
+  color: var(--win-ink);
+  background: var(--win-grey);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.btn--win:active {
+  transform: translate(2px, 2px);
+  background: var(--win-pressed);
+  border-color: var(--bevel-sunken-colors);
+  box-shadow: var(--bevel-sunken-shadow);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+  color: #4a4a4a;
+  background: var(--win-grey);
+  border-color: #808080;
+  box-shadow: none;
+}

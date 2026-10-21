@@ -1,0 +1,16 @@
+/* Layout only; each page sets its own look through the className it passes. */
+.step-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-list__item {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-list__number {
+  font-family: var(--font-accent);
+}

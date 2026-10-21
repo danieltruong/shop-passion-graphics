@@ -1,0 +1,74 @@
+{
+  "products": [
+    {
+      "productId": "prod_e2e_frog",
+      "name": "Frog",
+      "description": "A small felt frog with a big appetite.",
+      "price": 2500,
+      "currency": "CAD",
+      "imageUrl": "/product_placeholder.svg?frog-1",
+      "images": [
+        "/product_placeholder.svg?frog-1",
+        "/product_placeholder.svg?frog-2",
+        "/product_placeholder.svg?frog-3"
+      ],
+      "slug": "frog",
+      "category": "Plush",
+      "badge": "new",
+      "paymentLink": "https://buy.stripe.com/test_x",
+      "active": true,
+      "stripeProductId": "prod_e2e_frog",
+      "stripePriceId": "price_e2e_frog"
+    },
+    {
+      "productId": "prod_e2e_sobble",
+      "name": "Sobble Cart",
+      "description": "Release me from my prison!",
+      "price": 3499,
+      "currency": "CAD",
+      "imageUrl": "/product_placeholder.svg?sobble",
+      "images": ["/product_placeholder.svg?sobble"],
+      "slug": "sobble-cart",
+      "category": "Stickers",
+      "badge": "sold_out",
+      "paymentLink": "",
+      "active": true,
+      "stripeProductId": "prod_e2e_sobble",
+      "stripePriceId": "price_e2e_sobble"
+    },
+    {
+      "productId": "prod_e2e_moth",
+      "name": "Moth Pin",
+      "description": "Enamel pin, drawn to lamps.",
+      "price": 1200,
+      "currency": "CAD",
+      "imageUrl": "/product_placeholder.svg?moth",
+      "images": ["/product_placeholder.svg?moth"],
+      "slug": "moth-pin",
+      "category": "Pins",
+      "badge": "",
+      "paymentLink": "https://buy.stripe.com/test_moth",
+      "active": true,
+      "stripeProductId": "prod_e2e_moth",
+      "stripePriceId": "price_e2e_moth"
+    },
+    {
+      "productId": "prod_e2e_toad",
+      "name": "Toad Plush",
+      "description": "Lumpy, soft, sits on a shelf.",
+      "price": 4000,
+      "currency": "CAD",
+      "imageUrl": "/product_placeholder.svg?toad",
+      "images": ["/product_placeholder.svg?toad"],
+      "slug": "toad-plush",
+      "category": "Plush",
+      "badge": "",
+      "paymentLink": "https://buy.stripe.com/test_toad",
+      "active": true,
+      "stripeProductId": "prod_e2e_toad",
+      "stripePriceId": "price_e2e_toad"
+    }
+  ],
+  "generated": "2026-10-20T00:00:00.000Z",
+  "source": "e2e fixture"
+}

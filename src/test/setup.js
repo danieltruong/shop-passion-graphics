@@ -58,10 +58,11 @@ if (typeof window !== 'undefined') {
     })),
   })
 
-  // jsdom has no layout engine; framer-motion calls this on animated elements.
+  // jsdom has no layout engine: App scrolls on navigation, framer-motion on animated elements.
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = vi.fn()
   }
+  window.scrollTo = vi.fn()
 }
 
 afterEach(() => {

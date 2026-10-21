@@ -1,62 +1,37 @@
-import { test, expect } from '@playwright/test'
+import { CART_ENABLED } from '../src/features.js'
+import { test, expect, gotoReady } from './fixtures.js'
 
 /**
- * Accessibility behaviour that jsdom cannot verify.
- *
- * Every assertion here maps to a finding in docs/AUDIT.md that was fixed but marked as
- * needing manual browser confirmation. jsdom has no layout engine and no real focus model,
- * so the vitest suite can prove the markup is right but not that the *behaviour* is.
+ * Accessibility behaviour that jsdom cannot verify: real focus, layout, computed styles and
+ * media emulation. Catalog comes from e2e/fixtures/products.json via ./fixtures.js.
  */
 
-test.describe('cart drawer — A11Y-01, A11Y-02', () => {
+const playState = (locator) => locator.evaluate((el) => getComputedStyle(el).animationPlayState)
+
+// Registered only while the cart ships, so Phase 1 runs report no skipped tests.
+const cartDescribe = CART_ENABLED ? test.describe : () => {}
+
+cartDescribe('cart drawer (Phase 2)', () => {
   test('no dialog is exposed while the cart is closed', async ({ page }) => {
-    // A11Y-01: the drawer used to render aria-modal="true" unconditionally, so assistive
-    // tech was told a modal was open on every page load.
-    await page.goto('/')
+    await gotoReady(page, '/')
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
   test('keyboard never reaches drawer controls while closed', async ({ page }) => {
-    // The real A11Y-01 symptom: the panel was only translated off-screen, so tabbing past
-    // the footer landed on the Close button and focus visibly vanished.
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await gotoReady(page, '/')
 
     const seen = []
     for (let i = 0; i < 40; i++) {
       await page.keyboard.press('Tab')
-      const label = await page.evaluate(() => {
-        const el = document.activeElement
-        if (!el || el === document.body) return null
-        return el.getAttribute('aria-label') ?? el.textContent?.trim().slice(0, 40) ?? el.tagName
-      })
-      if (label) seen.push(label)
+      seen.push(await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? ''))
     }
 
     expect(seen.join(' | ')).not.toMatch(/close cart|checkout via stripe|clear cart|quantity of/i)
   })
 
-  test('skip link is the first tab stop and moves focus to main', async ({ page }) => {
-    // A11Y-12: id="main-content" tabIndex={-1} existed with no skip link pointing at it.
-    await page.goto('/')
-    // Wait for React to render before pressing Tab. Without this the keypress can land
-    // pre-hydration, focus nothing, and fail intermittently under parallel execution.
-    await expect(page.locator('#main-content')).toBeAttached()
-    await page.keyboard.press('Tab')
-
-    const skip = page.getByRole('link', { name: /skip to main content/i })
-    await expect(skip).toBeFocused()
-    // Visible only on focus — verifies the CSS actually reveals it, not just that it exists.
-    await expect(skip).toBeInViewport()
-
-    await page.keyboard.press('Enter')
-    await expect(page.locator('#main-content')).toBeFocused()
-  })
-
   test('opening the cart moves focus into the dialog', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-    await page.getByRole('button', { name: /shopping cart/i }).click()
+    await gotoReady(page, '/')
+    await page.getByRole('button', { name: /^cart,/i }).click()
 
     const dialog = page.getByRole('dialog', { name: 'Shopping cart' })
     await expect(dialog).toBeVisible()
@@ -64,9 +39,7 @@ test.describe('cart drawer — A11Y-01, A11Y-02', () => {
   })
 
   test('Tab is trapped inside the open dialog', async ({ page }) => {
-    // A11Y-02: focus previously walked straight out of the "modal" into the page behind it.
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await gotoReady(page, '/')
     await page.getByRole('button', { name: /add to cart/i }).first().click()
     await expect(page.getByRole('dialog')).toBeVisible()
 
@@ -81,11 +54,8 @@ test.describe('cart drawer — A11Y-01, A11Y-02', () => {
   })
 
   test('Escape closes the drawer and returns focus to the cart button', async ({ page }) => {
-    // A11Y-02: focus used to land on <body>, so the next Tab restarted at the top of the page.
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    const cartButton = page.getByRole('button', { name: /shopping cart/i })
+    await gotoReady(page, '/')
+    const cartButton = page.getByRole('button', { name: /^cart,/i })
     await cartButton.click()
     await expect(page.getByRole('dialog')).toBeVisible()
 
@@ -95,104 +65,198 @@ test.describe('cart drawer — A11Y-01, A11Y-02', () => {
   })
 })
 
-test.describe('reduced motion — A11Y-06, A11Y-07, A11Y-08', () => {
-  test('marquee and blink respect the OS preference', async ({ page }, testInfo) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+test.describe('skip link and focus on navigation', () => {
+  test('first Tab shows the skip link and Enter focuses main', async ({ page }) => {
+    await gotoReady(page, '/')
+    await page.keyboard.press('Tab')
 
-    const reduced = testInfo.project.name.includes('reduced-motion')
+    const skip = page.getByRole('link', { name: 'Skip to main content' })
+    await expect(skip).toBeFocused()
+    await expect(skip).toBeInViewport()
 
-    // Guard: assert the emulation is actually in effect before trusting anything below.
-    // Without this the reduced-motion project can silently run against un-reduced styles
-    // and still pass — which is exactly what happened when `reducedMotion` was set at the
-    // top level of `use` instead of inside `contextOptions` (see playwright.config.js).
-    const matches = await page.evaluate(
-      () => matchMedia('(prefers-reduced-motion: reduce)').matches,
-    )
-    expect(matches, `prefers-reduced-motion emulation not applied in "${testInfo.project.name}"`)
-      .toBe(reduced)
-
-    const state = await page.evaluate(() => {
-      const read = (sel) => {
-        const el = document.querySelector(sel)
-        if (!el) return null
-        const s = getComputedStyle(el)
-        return { animationName: s.animationName, duration: s.animationDuration }
-      }
-      return { marquee: read('.hero-marquee span'), blink: read('.blink') }
-    })
-
-    expect(state.marquee, '.hero-marquee span not found').not.toBeNull()
-
-    if (reduced) {
-      // theme.css collapses animation-duration to 0.01ms under prefers-reduced-motion.
-      expect(parseFloat(state.marquee.duration)).toBeLessThan(1)
-      if (state.blink) {
-        expect(
-          state.blink.animationName === 'none' || parseFloat(state.blink.duration) < 1,
-        ).toBe(true)
-      }
-    } else {
-      expect(state.marquee.animationName).toBe('marquee')
-      expect(parseFloat(state.marquee.duration)).toBeGreaterThan(1)
-    }
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#main-content')).toBeFocused()
   })
 
-  test('marquee has a working pause control (WCAG 2.2.2)', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+  test('clicking a nav link moves focus to main @desktop', async ({ page }) => {
+    await gotoReady(page, '/')
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'About' }).click()
 
-    // Located by class, not accessible name — the name intentionally flips
-    // "Pause scrolling banner" → "Resume scrolling banner" when toggled.
-    const toggle = page.locator('.marquee-toggle')
-    await expect(toggle).toBeVisible()
-    await expect(toggle).toHaveAccessibleName(/pause scrolling banner/i)
+    await expect(page.getByRole('heading', { level: 1, name: 'About the shop' })).toBeVisible()
+    await expect(page.locator('#main-content')).toBeFocused()
+  })
+
+  test('footer hash link scrolls its target into view', async ({ page }) => {
+    await gotoReady(page, '/')
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Custom orders' }).click()
+
+    await expect(page).toHaveURL(/\/faq#products$/)
+    await expect(page.locator('#products')).toBeInViewport()
+    await expect(page.locator('#main-content')).toBeFocused()
+  })
+})
+
+test.describe('mobile menu @mobile', () => {
+  test('Menu button reports its state through aria-expanded', async ({ page }) => {
+    await gotoReady(page, '/')
+    const menu = page.getByRole('button', { name: 'Menu' })
+    const nav = page.getByRole('navigation', { name: 'Main' })
+
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await expect(nav).toBeHidden()
+
+    await menu.click()
+    await expect(menu).toHaveAttribute('aria-expanded', 'true')
+    await expect(nav).toBeVisible()
+  })
+
+  test('Escape closes the menu and returns focus to the Menu button', async ({ page }) => {
+    await gotoReady(page, '/')
+    const menu = page.getByRole('button', { name: 'Menu' })
+    await menu.click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'FAQ' }).focus()
+
+    await page.keyboard.press('Escape')
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
+    await expect(menu).toBeFocused()
+  })
+
+  test('choosing a link closes the menu and focuses main', async ({ page }) => {
+    await gotoReady(page, '/')
+    const menu = page.getByRole('button', { name: 'Menu' })
+    await menu.click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'FAQ' }).click()
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Frequently asked questions' })).toBeVisible()
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
+    await expect(page.locator('#main-content')).toBeFocused()
+  })
+})
+
+test.describe('product gallery', () => {
+  test('thumbnails mark the shown photo with aria-pressed', async ({ page }) => {
+    await gotoReady(page, '/products/frog')
+    const first = page.getByRole('button', { name: 'Show photo 1' })
+    const second = page.getByRole('button', { name: 'Show photo 2' })
+
+    await expect(first).toHaveAttribute('aria-pressed', 'true')
+    await expect(second).toHaveAttribute('aria-pressed', 'false')
+
+    await second.click()
+    await expect(second).toHaveAttribute('aria-pressed', 'true')
+    await expect(first).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.locator('.gallery__main img')).toHaveAttribute('alt', 'Frog photo 2')
+  })
+
+  test('every thumbnail is at least 44px on both axes', async ({ page }) => {
+    await gotoReady(page, '/products/frog')
+    const thumbs = page.locator('.gallery__thumb')
+    await expect(thumbs).toHaveCount(3)
+
+    const smallest = await thumbs.evaluateAll((els) =>
+      Math.min(...els.flatMap((el) => [el.getBoundingClientRect().width, el.getBoundingClientRect().height])),
+    )
+    expect(smallest).toBeGreaterThanOrEqual(44)
+  })
+})
+
+test.describe('pause animations (WCAG 2.2.2)', () => {
+  test('toggle keeps its name and flips aria-pressed', async ({ page }) => {
+    await gotoReady(page, '/')
+    const toggle = page.locator('.pause-toggle')
+
+    await expect(toggle).toHaveAccessibleName('Pause animations')
     await expect(toggle).toHaveAttribute('aria-pressed', 'false')
 
     await toggle.click()
     await expect(toggle).toHaveAttribute('aria-pressed', 'true')
-    await expect(toggle).toHaveAccessibleName(/resume scrolling banner/i)
+    await expect(toggle).toHaveAccessibleName('Pause animations')
+  })
 
-    // The actual requirement: motion stops, not merely that a button toggled.
-    const playState = await page.evaluate(
-      () => getComputedStyle(document.querySelector('.hero-marquee span')).animationPlayState,
-    )
-    expect(playState).toBe('paused')
+  test('pressing it swaps the scrolling track for the short line @desktop', async ({ page }) => {
+    await gotoReady(page, '/')
+    const track = page.locator('.spg-marquee__track')
+    const short = page.locator('.spg-marquee__short')
+    await expect(track).toBeVisible()
+    await expect(short).toBeHidden()
+
+    await page.locator('.pause-toggle').click()
+    await expect(track).toBeHidden()
+    await expect(short).toBeVisible()
+  })
+
+  test('pressing it pauses the rainbow and starfield loops', async ({ page }) => {
+    await gotoReady(page, '/')
+    const rainbow = page.locator('.rainbow-text').first()
+    const stars = page.locator('.starfield__stars').first()
+    expect(await playState(rainbow)).toBe('running')
+    expect(await playState(stars)).toBe('running')
+
+    await page.locator('.pause-toggle').click()
+    await expect(page.locator('[data-animations-paused]')).toHaveCount(1)
+    expect(await playState(rainbow)).toBe('paused')
+    expect(await playState(stars)).toBe('paused')
+  })
+
+  test('the marquee scrolls when motion is allowed @desktop', async ({ page }) => {
+    await gotoReady(page, '/')
+    const track = page.locator('.spg-marquee__track')
+    await expect(track).toBeVisible()
+    expect(await track.evaluate((el) => getComputedStyle(el).animationName)).toBe('marquee')
   })
 })
 
-test.describe('rendering — TEST-01', () => {
-  test('product grid is actually visible, not stuck at opacity 0', async ({ page }) => {
-    // The old IntersectionObserver stub never fired its callback, so whileInView elements
-    // stayed in the `hidden` variant. Tests passed anyway. This is the check that would
-    // have caught a regression blanking the entire shop.
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+test.describe('prefers-reduced-motion', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+  })
 
-    const card = page.locator('.product-card').first()
-    await expect(card).toBeVisible()
+  test('home page runs no animations once loaded', async ({ page }) => {
+    await gotoReady(page, '/')
+    // One-shot 0.01ms animations may still be finishing; wait for them rather than sleeping.
+    await expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0)
+  })
 
-    // The grid sits below the fold, and the cards enter via `whileInView` — so they are
-    // legitimately at opacity 0 until scrolled to. Scroll first, then assert they actually
-    // resolve to visible. Note toBeVisible() alone would NOT catch this: Playwright treats
-    // an opacity-0 element with a bounding box as visible, which is exactly how the old
-    // no-op IntersectionObserver stub went unnoticed in vitest.
+  test('the short marquee line replaces the scrolling track @desktop', async ({ page }) => {
+    await gotoReady(page, '/')
+    await expect(page.locator('.spg-marquee__track')).toBeHidden()
+    await expect(page.locator('.spg-marquee__short')).toBeVisible()
+  })
+
+  test('starfield layers do not move with scroll', async ({ page }) => {
+    await gotoReady(page, '/')
+    await page.evaluate(() => window.scrollTo({ top: 1500, behavior: 'instant' }))
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500)
+
+    const transforms = await page
+      .locator('.starfield__layer')
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).transform))
+    expect(transforms).toEqual(['none', 'none', 'none'])
+  })
+})
+
+test('forced colors hide the starfield', async ({ page }) => {
+  await page.emulateMedia({ forcedColors: 'active' })
+  await gotoReady(page, '/')
+  await expect(page.locator('.starfield')).toBeHidden()
+})
+
+test.describe('rendering', () => {
+  test('product cards resolve to fully opaque after scrolling into view', async ({ page }) => {
+    // Playwright counts an opacity-0 box as visible, so read opacity directly.
+    await gotoReady(page, '/')
+    const card = page.locator('.shop-card').first()
     await card.scrollIntoViewIfNeeded()
     await expect
-      .poll(
-        () => card.evaluate((el) => parseFloat(getComputedStyle(el).opacity)),
-        { message: 'product card never animated in after scrolling into view', timeout: 5000 },
-      )
+      .poll(() => card.evaluate((el) => parseFloat(getComputedStyle(el).opacity)))
       .toBeGreaterThan(0.9)
   })
 
-  test('prices render in the catalog currency with no stray dollar sign', async ({ page }) => {
-    // FE-01: the live CAD catalog used to render "CAD $100.00".
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    const price = await page.locator('.product-price').first().textContent()
-    expect(price).not.toMatch(/CAD\s*\$/)
-    expect(price).toMatch(/\d/)
+  test('prices read as "$25.00 CAD" with no "CAD $"', async ({ page }) => {
+    await gotoReady(page, '/')
+    const frog = page.locator('.shop-card').filter({ has: page.getByRole('link', { name: 'Frog' }) })
+    await expect(frog.locator('.price-sticker')).toHaveText('$25.00 CAD')
   })
 })

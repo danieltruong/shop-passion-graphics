@@ -1,0 +1,300 @@
+.spg-header {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: linear-gradient(180deg, rgba(20, 0, 40, 0.95) 0%, rgba(13, 13, 26, 0.92) 100%);
+  border-bottom: 4px ridge var(--win-grey);
+}
+
+/* ===== Marquee ===== */
+.spg-marquee {
+  display: flex;
+  align-items: center;
+  background: #000;
+  border-bottom: 2px solid var(--color-gold);
+  font-family: var(--font-flavour);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #39ff14;
+}
+
+.spg-marquee__viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  contain: paint;
+  white-space: nowrap;
+  padding: 7px 0;
+}
+
+/* Two equal copies, each at least as wide as the viewport, so the -50% keyframe
+   ends exactly where the loop starts with no empty strip. */
+.spg-marquee__track {
+  display: flex;
+  width: max-content;
+  min-width: 200%;
+  animation: marquee var(--marquee-duration) linear infinite;
+}
+
+.spg-marquee__copy {
+  flex: 1 0 auto;
+  padding-right: 1em;
+}
+
+.spg-marquee:hover .spg-marquee__track {
+  animation-play-state: paused;
+}
+
+.spg-marquee__short {
+  display: none;
+}
+
+/* A stopped track clips its text, so paused, narrow or reduced motion shows the short line.
+   CSS cannot list a media condition beside a selector, hence two blocks with the same body. */
+[data-animations-paused] .spg-marquee__track {
+  display: none;
+}
+
+[data-animations-paused] .spg-marquee__viewport {
+  text-align: center;
+}
+
+[data-animations-paused] .spg-marquee__short {
+  display: inline;
+}
+
+@media (max-width: 760px), (prefers-reduced-motion: reduce) {
+  .spg-marquee__track {
+    display: none;
+  }
+
+  .spg-marquee__viewport {
+    text-align: center;
+  }
+
+  .spg-marquee__short {
+    display: inline;
+  }
+}
+
+.pause-toggle {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  position: relative;
+  z-index: 1;
+  margin: 0 8px;
+  padding: 0 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--win-ink);
+  background: var(--win-grey);
+  cursor: pointer;
+}
+
+.pause-toggle.sunken {
+  background: var(--win-pressed);
+}
+
+@media (forced-colors: active) {
+  .pause-toggle[aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* ===== Main row ===== */
+.spg-header__row {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+}
+
+.spg-header__menu-btn {
+  display: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--win-ink);
+  background: var(--win-grey);
+  cursor: pointer;
+}
+
+.spg-header__logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.spg-header__name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.spg-header__menu {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+}
+
+.spg-nav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+
+.spg-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-3);
+  text-decoration: none;
+}
+
+.spg-nav__link:hover {
+  color: var(--color-link-hover);
+}
+
+.spg-nav__link[aria-current='page'] {
+  color: var(--color-gold);
+  text-decoration: underline wavy var(--color-gold);
+  text-underline-offset: 6px;
+}
+
+.spg-search__box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 8px;
+  color: #444;
+  background: #fff;
+}
+
+.spg-search__box input {
+  width: 170px;
+  min-width: 0;
+  min-height: 36px;
+  border: 0;
+  font: 14px var(--font-body);
+  color: #000;
+  background: transparent;
+}
+
+.spg-header__cart {
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.spg-header__cart-badge {
+  display: none;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 760px) {
+  .spg-marquee {
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .spg-marquee__viewport {
+    padding: 6px 12px;
+  }
+
+  /* The short line fits, so nothing scrolls; the pause control stays for the other loops. */
+  .pause-toggle {
+    margin: 0 6px 0 0;
+  }
+
+  .spg-header__row {
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .spg-header__menu-btn {
+    display: flex;
+  }
+
+  .spg-header__logo {
+    gap: 6px;
+  }
+
+  .spg-header__logo svg {
+    width: 30px;
+    height: 26px;
+  }
+
+  .spg-header__name {
+    font-size: 19px;
+  }
+
+  .spg-header__menu {
+    display: none;
+    order: 1;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .spg-header__menu.is-open {
+    display: flex;
+  }
+
+  .spg-nav {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .spg-search__box input {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .spg-header__cart {
+    position: relative;
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .spg-header__cart-text {
+    display: none;
+  }
+
+  .spg-header__cart-badge {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+    background: var(--badge-bg);
+  }
+}

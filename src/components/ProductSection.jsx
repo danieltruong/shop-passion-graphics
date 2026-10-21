@@ -1,73 +1,115 @@
-import { motion } from 'framer-motion'
+import FilterBar from './FilterBar'
+import LoadError from './LoadError'
 import ProductCard from './ProductCard'
-import { scaleIn, staggerContainer, VIEWPORTS } from '../utils/animations'
-import { lineKey } from '../utils/cart'
+import { IconSparkle } from './icons'
+import { categoriesOf, filterProducts, sortProducts } from '../utils/catalog'
+import './ProductSection.css'
 
-/**
- * Hoisted to module scope. staggerContainer() is a factory, and Framer propagates variants by
- * reference — calling it inline handed Framer a brand-new variant tree on every render.
- */
-const GRID_STAGGER = staggerContainer(0.15)
+const BADGE_LABELS = { new: 'New arrivals', sold_out: 'Sold out' }
 
-/**
- * ProductSection — grid of ProductCard components.
- *
- * Props:
- *   products    ProductObject[]       — from products.json
- *   onAddToCart (product) => void     — forwarded to each ProductCard
- *   loadError   string | null         — set when the catalog fetch failed
- */
-export default function ProductSection({ products, onAddToCart, loadError }) {
-  // A failed fetch is NOT an empty shop. Previously both rendered "coming soon", so a CDN
-  // outage was indistinguishable from a catalogue with nothing in it.
+function Section({ children }) {
+  return (
+    <section id="shop" className="shop-section" aria-labelledby="shop-title">
+      <div className="shop-section__head">
+        <IconSparkle size={30} className="shop-section__sparkle" />
+        <h2 id="shop-title" className="shop-section__title">
+          Shop
+        </h2>
+        <IconSparkle size={30} className="shop-section__sparkle" />
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Filter state is controlled by the parent; `category` and `badge` null mean no filter. */
+export default function ProductSection({
+  products,
+  loading = false,
+  loadError = null,
+  onAddToCart,
+  category = null,
+  onCategoryChange,
+  sort,
+  onSortChange,
+  query = '',
+  onClearQuery,
+  badge = null,
+  onClearBadge,
+}) {
+  if (loading) {
+    return (
+      <Section>
+        <p className="shop-section__message">Loading...</p>
+      </Section>
+    )
+  }
+
   if (loadError) {
     return (
-      <section className="product-section" style={{ textAlign: 'center' }}>
-        <h2 className="section-title rainbow-text">Shop</h2>
-        <p className="product-section-message" role="alert">
-          We couldn&apos;t load the shop just now.{' '}
-          <button className="link-button" onClick={() => window.location.reload()}>
-            Try again
-          </button>
-        </p>
-      </section>
+      <Section>
+        <LoadError className="shop-section__message" />
+      </Section>
     )
   }
 
   if (!products || products.length === 0) {
     return (
-      <section className="product-section" style={{ textAlign: 'center' }}>
-        <h2 className="section-title rainbow-text">Shop</h2>
-        <p className="product-section-message">
-          Products coming soon... the artist is still creating{' '}
-          <span aria-hidden="true">🎨</span>
+      <Section>
+        <p className="shop-section__message">
+          Products coming soon. The artist is still creating.
         </p>
-      </section>
+      </Section>
     )
   }
 
+  const visible = sortProducts(filterProducts(products, { category, badge, query }), sort)
+  const badgeLabel = BADGE_LABELS[badge] ?? badge
+
   return (
-    <section className="product-section">
-      <motion.h2
-        className="section-title rainbow-text"
-        initial="hidden"
-        whileInView="visible"
-        viewport={VIEWPORTS.default}
-        variants={scaleIn}
-      >
-        <span aria-hidden="true">✨</span> Shop <span aria-hidden="true">✨</span>
-      </motion.h2>
-      <motion.div
-        className="product-grid"
-        initial="hidden"
-        whileInView="visible"
-        viewport={VIEWPORTS.default}
-        variants={GRID_STAGGER}
-      >
-        {products.map((product) => (
-          <ProductCard key={lineKey(product)} product={product} onAddToCart={onAddToCart} />
-        ))}
-      </motion.div>
-    </section>
+    <Section>
+      <FilterBar
+        categories={categoriesOf(products)}
+        category={category}
+        onCategoryChange={onCategoryChange}
+        sort={sort}
+        onSortChange={onSortChange}
+        count={visible.length}
+      />
+      {(query || badge) && (
+        <div className="shop-active">
+          {query && (
+            <p className="shop-active__query">
+              Results for <strong>&ldquo;{query}&rdquo;</strong>
+            </p>
+          )}
+          {badge && (
+            <button
+              type="button"
+              className="shop-active__clear bevel"
+              aria-label={`${badgeLabel}, clear filter`}
+              onClick={onClearBadge}
+            >
+              {badgeLabel}
+              <span aria-hidden="true"> ×</span>
+            </button>
+          )}
+          {query && (
+            <button type="button" className="shop-active__clear bevel" onClick={onClearQuery}>
+              Clear search
+            </button>
+          )}
+        </div>
+      )}
+      {visible.length > 0 ? (
+        <div className="shop-grid">
+          {visible.map((product) => (
+            <ProductCard key={product.productId} product={product} onAddToCart={onAddToCart} />
+          ))}
+        </div>
+      ) : (
+        <p className="shop-section__message">No products match. Try another category or search.</p>
+      )}
+    </Section>
   )
 }

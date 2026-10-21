@@ -1,0 +1,29 @@
+.shop-active {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: -12px 0 24px;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.shop-active__query {
+  margin: 0;
+  color: var(--color-text-2);
+}
+
+.shop-active__clear {
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--win-ink);
+  background: var(--win-grey);
+  font: 15px var(--font-body);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .shop-active {
+    margin: -4px 12px 16px;
+  }
+}

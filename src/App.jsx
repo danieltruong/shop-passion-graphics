@@ -1,38 +1,40 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import Header from './components/Header'
-import Hero from './components/Hero'
-import ProductSection from './components/ProductSection'
-import Footer from './components/Footer'
+import { Routes, Route, useLocation, useNavigationType } from 'react-router'
+import SiteHeader from './components/SiteHeader'
+import SiteFooter from './components/SiteFooter'
 import CartDrawer from './components/CartDrawer'
-import SuccessBanner from './components/SuccessBanner'
+import Starfield from './components/Starfield'
+import HomePage from './pages/HomePage'
+import ProductPage from './pages/ProductPage'
+import AboutPage from './pages/AboutPage'
+import FaqPage from './pages/FaqPage'
+import ShippingPage from './pages/ShippingPage'
+import SuccessPage from './pages/SuccessPage'
+import PrivacyPage from './pages/PrivacyPage'
+import NotFoundPage from './pages/NotFoundPage'
+import { CART_ENABLED } from './features'
+import { normalizeProduct } from './utils/catalog'
 import * as cartOps from './utils/cart'
 
-/** True when the browser has just come back from a completed Stripe Checkout. */
-function isCheckoutReturn() {
-  return typeof window !== 'undefined' && window.location.pathname === '/success'
-}
-
-/**
- * App — root component.
- *
- * Owns cart state and passes it to Header (for CartIcon) and CartDrawer. The tree is shallow
- * enough that Context would add indirection without removing any drilling.
- *
- * Cart shape: [{ product: ProductObject, quantity: number }]
- * Cart mutation lives in src/utils/cart.js as pure functions so it can be tested directly.
- */
+// Cart state ([{ product, quantity }]) lives here, not in Context: the tree is shallow.
+// Mutations are pure functions in src/utils/cart.js so they can be tested directly.
 function App() {
+  const { pathname, hash, key } = useLocation()
+  const navigationType = useNavigationType()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  // Distinct from "no products": a failed fetch previously rendered as an empty catalog,
-  // so a CDN outage looked identical to a shop with nothing for sale.
+  // Distinct from "no products", so a CDN outage does not look like a shop with nothing for sale.
   const [loadError, setLoadError] = useState(null)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [cartError, setCartError] = useState(null)
+  const [animationsPaused, setAnimationsPaused] = useState(false)
 
+  // Stripe returns to /success after a completed checkout; only the first location counts.
+  const checkoutReturnRef = useRef(pathname === '/success')
   // The element that opened the drawer, so focus can be returned to it on close.
   const cartTriggerRef = useRef(null)
+  const lastPathnameRef = useRef(pathname)
 
   useEffect(() => {
     let cancelled = false
@@ -44,12 +46,11 @@ function App() {
       })
       .then((data) => {
         if (cancelled) return
-        const list = data.products ?? []
+        const list = (data.products ?? []).map(normalizeProduct)
         setProducts(list)
-        // Restore the cart only once the catalog is known — stored lines are re-hydrated
-        // from it so prices can never go stale and archived products drop out.
-        // After a completed checkout the cart is spent, so start empty instead.
-        setCart(isCheckoutReturn() ? [] : cartOps.loadCart(list))
+        // Stored lines are re-hydrated from the catalog so prices never go stale and archived
+        // products drop out. After a completed checkout the cart is spent, so start empty.
+        setCart(checkoutReturnRef.current ? [] : cartOps.loadCart(list))
       })
       .catch((err) => {
         if (cancelled) return
@@ -69,6 +70,21 @@ function App() {
   useEffect(() => {
     if (!loading) cartOps.saveCart(cart)
   }, [cart, loading])
+
+  // BrowserRouter never scrolls, so links do it here. POP (reload, back, forward) keeps its place.
+  useEffect(() => {
+    const pathnameChanged = lastPathnameRef.current !== pathname
+    lastPathnameRef.current = pathname
+    if (navigationType === 'POP') return
+    // A query-only change (search, filters, sort) keeps its place.
+    if (!hash && !pathnameChanged) return
+    // a11y 2.4.3: screen readers start on the new page; covers focus lost with the closed mobile menu.
+    document.getElementById('main-content')?.focus({ preventScroll: true })
+    const target = hash ? document.getElementById(hash.slice(1)) : null
+    // A missing target falls back to the top. 'instant' overrides the smooth scroll in index.css.
+    if (target) target.scrollIntoView()
+    else window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [key, pathname, hash, navigationType])
 
   const addToCart = useCallback((product) => {
     setCart((prev) => {
@@ -100,41 +116,55 @@ function App() {
     cartTriggerRef.current?.focus()
   }, [])
 
+  const catalog = { products, loading, loadError }
+
   return (
-    <div className="app">
-      {/* First tab stop — skips the decorative header and cart button. */}
+    <div className="app" data-animations-paused={animationsPaused || undefined}>
+      <Starfield />
+      {/* Always mounted, so text changes are announced; pages keep their visible loading text. */}
+      <div className="visually-hidden" role="status" aria-live="polite">
+        {loading ? 'Loading the shop' : ''}
+      </div>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
 
-      <Header cart={cart} onCartOpen={openCart} />
+      <SiteHeader
+        cartEnabled={CART_ENABLED}
+        cart={cart}
+        onCartOpen={openCart}
+        animationsPaused={animationsPaused}
+        onToggleAnimations={() => setAnimationsPaused((paused) => !paused)}
+      />
 
       <main className="main-content" id="main-content" tabIndex={-1}>
-        <SuccessBanner />
-        <Hero />
-        {loading ? (
-          <p className="loading rainbow-text" role="status">
-            Loading...
-          </p>
-        ) : (
-          <ProductSection
-            products={products}
-            onAddToCart={addToCart}
-            loadError={loadError}
+        <Routes>
+          <Route
+            path="/"
+            element={<HomePage {...catalog} onAddToCart={CART_ENABLED ? addToCart : undefined} />}
           />
-        )}
+          <Route path="/products/:slug" element={<ProductPage {...catalog} />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path="/shipping" element={<ShippingPage />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
       </main>
 
-      <Footer />
+      <SiteFooter />
 
-      <CartDrawer
-        cart={cart}
-        isOpen={cartOpen}
-        onClose={closeCart}
-        onUpdateQty={updateQuantity}
-        onClear={clearCart}
-        error={cartError}
-      />
+      {CART_ENABLED && (
+        <CartDrawer
+          cart={cart}
+          isOpen={cartOpen}
+          onClose={closeCart}
+          onUpdateQty={updateQuantity}
+          onClear={clearCart}
+          error={cartError}
+        />
+      )}
     </div>
   )
 }
