@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  # Called by deploy.yml on push to main; no push trigger here, or the same commit would run CI twice.
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Full URLs: a bare `actions/x` resolves against the instance's DEFAULT_ACTIONS_URL, which an admin can change.
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Must run before setup-node: `cache: 'yarn'` calls yarn to locate the cache folder,
+      # so yarn has to resolve on PATH first.
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup Node.js 24
+        uses: https://data.forgejo.org/actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      # --immutable fails instead of rewriting yarn.lock, so an uncommitted lockfile
+      # change cannot pass CI.
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: yarn test:run
+
+      # No STRIPE_SECRET_KEY: the build does not need it, and a pull_request build could
+      # exfiltrate it through a workflow or build-script change.
+      - name: Build
+        run: yarn build
+        env:
+          # Intentionally empty: CartDrawer falls back to /api/create-checkout (the Vite dev
+          # middleware) and the build succeeds. The real URL is injected only by deploy.yml.
+          VITE_CHECKOUT_API_URL: ''
+
+      - name: Verify build output
+        run: |
+          test -f dist/index.html   || (echo "❌ dist/index.html missing" && exit 1)
+          test -f dist/products.json || (echo "❌ dist/products.json missing" && exit 1)
+          echo "✅ Build OK — $(du -sh dist/ | cut -f1)"
+
+      # jsdom cannot test focus, computed styles or prefers-reduced-motion; these browser tests do.
+      # Playwright's webServer rebuilds (`yarn build && yarn preview`) in CI; Build above fails fast.
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: yarn test:e2e
+        env:
+          VITE_CHECKOUT_API_URL: ''
+
+      # Forgejo's artifact store accepts only upload-artifact v3 or its own patched v4.
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: https://data.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e # v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload build artifact
+        uses: https://data.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e # v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7

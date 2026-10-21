@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  One-time bootstrap for shop-passion-graphics CI deploys — GitHub OIDC provider and the
-  least-privilege role that deploy.yml assumes.
+  Bootstrap for shop-passion-graphics CI deploys: GitHub OIDC provider, the
+  least-privilege role deploy.yml assumes, and the IAM user Forgejo Actions signs in as.
 
-  This is NOT deployed by deploy.yml; it is what makes deploy.yml able to run. Deploy it once,
-  by hand, with credentials that can create IAM roles:
+  deploy.yml does NOT deploy this. Deploy it by hand with credentials that can create IAM
+  roles:
 
     aws cloudformation deploy \
       --template-file infra/bootstrap-deploy-role.yaml \
@@ -12,12 +12,13 @@ Description: >
       --capabilities CAPABILITY_NAMED_IAM \
       --region ca-central-1
 
-  Then put the RoleArn output into the repo's AWS_ROLE_ARN secret.
+  Put the RoleArn output in the AWS_ROLE_ARN secret on GitHub and Forgejo.
 
-  Why OIDC and not access keys: deploy.yml already calls configure-aws-credentials with
-  role-to-assume, and short-lived tokens cannot be exfiltrated and reused the way the
-  long-lived AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY pair in the repo secrets can. Those keys
-  had to be rotated by hand once already (commit 4552175).
+  GitHub Actions assumes the role through OIDC. Forgejo has no OIDC token AWS can verify, so
+  Forgejo Actions signs in as ForgejoDeployUser, which may only assume this role. Store its
+  key (aws iam create-access-key --user-name shop-passion-forgejo-deploy) as Forgejo secrets
+  AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. Rotate the key by creating a new one, updating
+  both Forgejo secrets, then deleting the old one.
 
 Parameters:
   GitHubOwner:
@@ -59,11 +60,25 @@ Resources:
       ThumbprintList:
         - 6938fd4d98bab03faadb97b34396831e3780aea1
 
+  ForgejoDeployUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: shop-passion-forgejo-deploy
+      Policies:
+        - PolicyName: assume-deploy-role
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                # Literal role name, not !GetAtt: DeployRole's trust policy references this user, so that would be a cycle.
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-deploy'
+
   DeployRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: shop-passion-deploy
-      Description: Assumed by GitHub Actions (deploy.yml) to deploy the checkout API and site.
+      Description: Assumed by GitHub Actions and Forgejo Actions (deploy.yml) to deploy the checkout API and site.
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -81,6 +96,10 @@ Resources:
                 'token.actions.githubusercontent.com:sub':
                   - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:staging'
                   - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:prod'
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt ForgejoDeployUser.Arn
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: sam-deploy
           PolicyDocument:
@@ -180,8 +199,8 @@ Resources:
                   - lambda:ListVersionsByFunction
                 Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:shop-passion-*'
 
-              # ── IAM: the function's execution role, which SAM creates ──
-              # Scoped to shop-passion-* so this role cannot mint arbitrary privileged roles.
+              # ── IAM: SAM's function roles; stage prefixes, since shop-passion-* also matches this role ──
+              # A long-lived Forgejo key reaches this role; the prefixes keep it from editing shop-passion-deploy itself.
               - Effect: Allow
                 Action:
                   - iam:CreateRole
@@ -190,18 +209,33 @@ Resources:
                   - iam:PutRolePolicy
                   - iam:GetRolePolicy
                   - iam:DeleteRolePolicy
-                  - iam:AttachRolePolicy
-                  - iam:DetachRolePolicy
                   - iam:ListRolePolicies
                   - iam:ListAttachedRolePolicies
                   - iam:TagRole
                   - iam:UntagRole
                   - iam:UpdateAssumeRolePolicy
-                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-*'
+                Resource:
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-staging-*'
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-prod-*'
+
+              # SAM attaches this managed policy to every function role; template.yaml adds no other.
+              - Effect: Allow
+                Action:
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                Resource:
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-staging-*'
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-prod-*'
+                Condition:
+                  ArnEquals:
+                    'iam:PolicyARN':
+                      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
               - Effect: Allow
                 Action: iam:PassRole
-                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-*'
+                Resource:
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-staging-*'
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/shop-passion-prod-*'
                 Condition:
                   StringEquals:
                     'iam:PassedToService': lambda.amazonaws.com
@@ -274,5 +308,5 @@ Resources:
 
 Outputs:
   RoleArn:
-    Description: Set this as the AWS_ROLE_ARN secret in GitHub.
+    Description: Set this as the AWS_ROLE_ARN secret on GitHub and on Forgejo.
     Value: !GetAtt DeployRole.Arn
