@@ -102,17 +102,21 @@ never around them.
 | Variable | Where | Notes |
 |---|---|---|
 | `STRIPE_SECRET_KEY` | `.env.local` | Server-side only, never in bundle. Production uses `STRIPE_SECRET_ARN` (SSM). |
-| `ALLOWED_ORIGIN` | Lambda / `.env.local` | Comma-separated origin allowlist. Production value from SAM template, **not** GitHub secret. |
+| `ALLOWED_ORIGIN` | Lambda / `.env.local` | Comma-separated origin allowlist. Production value from SAM template, **not** CI secret. |
 | `VITE_CHECKOUT_API_URL` | build time | Public URL. `deploy.yml` injects from SAM stack output; unset, CartDrawer uses `/api/create-checkout`. |
 
-`deploy.yml` GitHub environment secrets: `AWS_ROLE_ARN`, `STRIPE_SECRET_ARN`, `S3_BUCKET_NAME`
-required; `CUSTOM_DOMAIN_ORIGINS` optional. `.env.local` stays gitignored.
+Forgejo repo secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ROLE_ARN`, `STRIPE_SECRET_ARN`, `S3_BUCKET_NAME`
+required; `CUSTOM_DOMAIN_ORIGINS` optional. GitHub environments hold same set minus both keys until cutover. `.env.local` stays gitignored.
+Forgejo has no environments, so secrets reach every branch's workflows: any push to Forgejo can assume deploy role; who can push bounds access.
 
 ## Deploy
 
-Push to `main` → CI (lint + test + build + e2e) must pass → `deploy.yml` runs SAM, builds
-frontend with the stack's API URL and syncs to S3.
+Forgejo (`http://192.168.3.55:3000/daniel/shop-passion-graphics`) runs `.forgejo/workflows/`: push to `main` → CI
+(lint + test + build + e2e) must pass → `deploy.yml` runs SAM, builds frontend with stack's API URL, syncs to S3.
 
+- **AWS sign-in**: Forgejo issues no OIDC token AWS accepts; IAM user `shop-passion-forgejo-deploy` (key in Forgejo
+  secrets) assumes role `shop-passion-deploy`. `.github/workflows/` deploys via OIDC until cutover; edit both.
+- **Push order**: GitHub and Forgejo both deploy on push to `main`; push `main` to `github` remote only after Forgejo deploy finishes (concurrency per platform; two `sam deploy` runs collide).
 - **CloudFront serves site, not bucket**; bucket is private (`SiteBucketPolicy`, Origin
   Access Control). Live URL is stack's `SiteUrl` output.
 - **`deploy.yml` does not deploy `infra/bootstrap-deploy-role.yaml`.** After changing it, run
@@ -124,20 +128,19 @@ frontend with the stack's API URL and syncs to S3.
 
 ## MCP tooling
 
-Gateway servers (`context7`, `github`, `chrome-devtools`, `browser`, `shadcn`, `magic-ui`,
+Gateway servers (`context7`, `forgejo`, `github`, `chrome-devtools`, `browser`, `shadcn`, `magic-ui`,
 `jira-eao-dst`) from mcpjungle at `http://192.168.5.22:8080/mcp`, user scope, never
 committed. `stripe` project-scoped in `.mcp.json`. Register with `claude mcp add --scope user`:
 `projects["…"].mcpServers` not inherited below; `.claude/agents/*.md` edits need restart.
 
 - Library APIs (React, Vite, Framer Motion, Stripe SDK, Vitest, Playwright): `context7`, not recall or WebSearch.
 - Stripe products, prices, sessions, refunds: `stripe`, not curl `api.stripe.com` or throwaway node script.
-- PRs, issues, code search: `github`, not `gh pr …`.
+- PRs, issues, code search: `forgejo`, not `gh pr …`; `github` only for the GitHub copy until cutover.
 - Lighthouse, performance checks on deployed site: `chrome-devtools`.
 - Screenshot/scrape public JS-heavy page: `browser`, not WebFetch.
-- CI run status and logs: `gh run list` / `gh run view --log-failed`; `github` has no Actions tools.
-- **Never** use `github` `push_files` or `create_or_update_file`: push to `main` deploys.
-- `browser` and `chrome-devtools` run on `192.168.5.22`, cannot reach this machine's
-  `localhost`. For local app use `webapp-testing` skill.
+- CI run status: `forgejo` list_workflow_runs / get_workflow_run; logs: repo page `/actions` (no log tool); GitHub runs until cutover: `gh run list` / `gh run view --log-failed`.
+- **Never** write files through `forgejo` or `github` MCP (`push_files`, `create_or_update_file`): push to `main` deploys.
+- `browser` and `chrome-devtools` run on `192.168.5.22`, cannot reach this machine's `localhost`: use `webapp-testing`.
 - `shadcn`, `magic-ui` (no Tailwind here) and `jira-eao-dst` (other employer) never apply.
 - MCP grants in `.claude/agents/*.md` `tools:` and `.claude/settings.json` stay read-only, one
   tool each: bare `mcp__mcpjungle` rule would also allow `merge_pull_request` and `push_files`.

@@ -1,0 +1,203 @@
+name: Deploy
+
+on:
+  # Staging deploys on every push to main
+  push:
+    branches: [main]
+  # Production deploys manually
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [staging, prod]
+        default: staging
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ca-central-1
+
+jobs:
+  # CI runs first so a commit that fails lint or tests never deploys.
+  ci:
+    uses: ./.forgejo/workflows/ci.yml
+
+  deploy:
+    name: Deploy → ${{ inputs.environment || 'staging' }}
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Must precede setup-node — `cache: 'yarn'` invokes yarn to find the cache folder.
+      # Yarn's version comes from `packageManager` in package.json.
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup Node.js 24
+        uses: https://data.forgejo.org/actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Fail early rather than part-way through a deploy. ALLOWED_ORIGIN is not a secret:
+      # the template derives it from the CloudFront distribution it creates.
+      - name: Verify required secrets
+        env:
+          STRIPE_SECRET_ARN: ${{ secrets.STRIPE_SECRET_ARN }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          missing=0
+          for var in STRIPE_SECRET_ARN S3_BUCKET_NAME; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Required secret $var is not set"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "✅ Required secrets present"
+
+      # SAM deploys before the Vite build: the bundle's VITE_CHECKOUT_API_URL comes from its stack output.
+      - name: Configure AWS credentials (access key, then deploy role)
+        uses: https://github.com/aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: forgejo-deploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+          # Session tags would need sts:TagSession, which the role's trust for this user does not grant.
+          role-skip-session-tagging: true
+
+      # The checkout function validates every submitted price ID against this catalog, so it
+      # must be inside the function bundle before `sam build` packages CodeUri.
+      - name: Sync catalog into Lambda bundle
+        run: yarn sync:catalog
+
+      # The makefile builder copies node_modules from `yarn install` above instead of running npm.
+      # No `continue-on-error`: a failed API deploy would ship an empty VITE_CHECKOUT_API_URL.
+      - name: Deploy Checkout API (SAM)
+        id: sam
+        env:
+          TARGET_ENV: ${{ inputs.environment || 'staging' }}
+          STRIPE_SECRET_ARN: ${{ secrets.STRIPE_SECRET_ARN }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          CUSTOM_DOMAIN_ORIGINS: ${{ secrets.CUSTOM_DOMAIN_ORIGINS }}
+        run: |
+          set -euo pipefail
+          case "$TARGET_ENV" in staging|prod) ;; *) echo "bad environment"; exit 1;; esac
+          ENV="$TARGET_ENV"
+          sam build --template-file infra/template.yaml
+
+          PARAM_OVERRIDES=(
+            "Stage=${ENV}"
+            "StripeSecretArn=${STRIPE_SECRET_ARN}"
+            # The stack does not create the site bucket, but it owns the bucket policy that
+            # restricts reads to the CloudFront distribution.
+            "SiteBucketName=${S3_BUCKET_NAME}"
+          )
+
+          # Only for a custom domain in front of the distribution; omitted, not passed empty,
+          # so the template default applies.
+          if [ -n "$CUSTOM_DOMAIN_ORIGINS" ]; then
+            PARAM_OVERRIDES+=("CustomDomainOrigins=${CUSTOM_DOMAIN_ORIGINS}")
+          fi
+
+          sam deploy \
+            --config-file infra/samconfig.toml \
+            --config-env "${ENV}" \
+            --parameter-overrides "${PARAM_OVERRIDES[@]}" \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+          stack_output() {
+            aws cloudformation describe-stacks \
+              --stack-name "shop-passion-${ENV}" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" \
+              --output text \
+              --region "$AWS_REGION"
+          }
+
+          CHECKOUT_URL=$(stack_output ApiUrl)
+          SITE_URL=$(stack_output SiteUrl)
+          DISTRIBUTION_ID=$(stack_output DistributionId)
+
+          # `--output text` prints "None" for a missing output, which would ship as
+          # VITE_CHECKOUT_API_URL="None" or invalidate nothing while the job stays green.
+          for pair in "ApiUrl=${CHECKOUT_URL}" "SiteUrl=${SITE_URL}" "DistributionId=${DISTRIBUTION_ID}"; do
+            key=${pair%%=*}
+            value=${pair#*=}
+            if [ -z "$value" ] || [ "$value" = "None" ]; then
+              echo "❌ Stack produced no ${key} output — refusing to continue"
+              exit 1
+            fi
+          done
+
+          # GITHUB_OUTPUT, not FORGEJO_OUTPUT: runners before v7.0.0 define only the GITHUB_* name.
+          {
+            echo "checkout_url=${CHECKOUT_URL}"
+            echo "site_url=${SITE_URL}"
+            echo "distribution_id=${DISTRIBUTION_ID}"
+          } >> "$GITHUB_OUTPUT"
+          echo "✅ SAM deploy complete — API ${CHECKOUT_URL}, site ${SITE_URL}"
+
+      - name: Build
+        run: yarn build
+        env:
+          NODE_ENV: production
+          # Stack output only: a secret fallback could be empty, which CartDrawer's `??` misses.
+          VITE_CHECKOUT_API_URL: ${{ steps.sam.outputs.checkout_url }}
+
+      - name: Deploy to S3
+        env:
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          set -euo pipefail
+
+          # Hashed assets — long-lived cache (Vite content-hashes filenames)
+          aws s3 sync dist/ "s3://${S3_BUCKET_NAME}" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "products.json"
+
+          # Entry point + data — no cache
+          aws s3 cp dist/index.html "s3://${S3_BUCKET_NAME}/index.html" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+          # No `|| true`: it would hide a failed upload, so the catalog could silently not publish.
+          aws s3 cp dist/products.json \
+            "s3://${S3_BUCKET_NAME}/products.json" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+          echo "✅ S3 sync complete"
+
+      # Distribution ID comes from the stack, not a secret, so this step cannot be skipped
+      # and leave a stale index.html behind a green job.
+      - name: Invalidate CloudFront cache
+        env:
+          DISTRIBUTION_ID: ${{ steps.sam.outputs.distribution_id }}
+        run: |
+          set -euo pipefail
+          # "/" too: CloudFront caches the DefaultRootObject under "/", so "/index.html" alone
+          # leaves the landing page stale.
+          aws cloudfront create-invalidation \
+            --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/" "/index.html" "/products.json"
+          echo "✅ CloudFront invalidation queued"
+
+      - name: Print deployment URL
+        env:
+          SITE_URL: ${{ steps.sam.outputs.site_url }}
+        run: |
+          echo "🚀 Deployed to: $SITE_URL"

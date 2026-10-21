@@ -4,7 +4,7 @@
 # For a first-time bootstrap of a new environment, run interactively:
 #   sam deploy --guided --config-env staging
 #
-# In CI (deploy.yml), GitHub Actions passes --parameter-overrides at deploy time
+# In CI, deploy.yml passes --parameter-overrides at deploy time
 # so secrets never touch this file.
 #
 # resolve_s3 = true → SAM auto-creates a managed S3 bucket for deployment

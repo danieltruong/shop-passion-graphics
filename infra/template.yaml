@@ -13,7 +13,7 @@ Parameters:
     Type: String
     AllowedValues: [staging, prod]
     Default: staging
-    Description: Deployment stage — matches GitHub environment name.
+    Description: Deployment stage: staging or prod.
 
   StripeSecretArn:
     Type: String

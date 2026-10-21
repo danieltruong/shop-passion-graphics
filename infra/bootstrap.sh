@@ -1,20 +1,6 @@
 #!/usr/bin/env bash
-#
-# One-time bootstrap for staging deploys. Run once, with AWS credentials that can create IAM
-# roles; after this, deploy.yml is self-sufficient.
-#
-#   bash infra/bootstrap.sh [aws-profile]
-#
-# It does four things, all idempotent — re-running is safe:
-#   1. deploys infra/bootstrap-deploy-role.yaml (GitHub OIDC provider + shop-passion-deploy role)
-#   2. stores the Stripe key from .env.local as an SSM SecureString
-#   3. sets AWS_ROLE_ARN and STRIPE_SECRET_ARN on the GitHub staging environment
-#   4. prints what it did
-#
-# Re-run this after any change to infra/bootstrap-deploy-role.yaml — the deploy role's policy
-# is not updated by deploy.yml, which assumes the role rather than managing it.
-#
-# It creates nothing outside shop-passion-*, deletes nothing, and never prints the Stripe key.
+# Creates the GitHub OIDC provider, deploy role and Forgejo user, stores the Stripe key as an SSM SecureString, sets GitHub environment secrets.
+# Idempotent; re-run after changing bootstrap-deploy-role.yaml: bash infra/bootstrap.sh [aws-profile]
 
 set -euo pipefail
 
@@ -25,14 +11,8 @@ PARAM_NAME=/shop-passion/staging/stripe-secret-key
 GH_REPO=danieltruong/shop-passion-graphics
 GH_ENV=staging
 
-# There is deliberately no SITE_ORIGIN here any more.
-#
-# It used to be set to the bucket's s3-website endpoint and written to an ALLOWED_ORIGIN
-# secret. That endpoint is HTTP-only — no TLS listener at all — so the site could never be
-# reached over https://, and the origin baked into the Lambda was the http:// one. The site is
-# now served through the CloudFront distribution in infra/template.yaml, and the origin
-# allowlist is derived from that distribution's domain inside the stack. Nothing has to know
-# the site's URL before the resource that defines it exists.
+# No SITE_ORIGIN: the origin allowlist is derived from the CloudFront distribution inside
+# infra/template.yaml, so nothing needs the site URL before the stack exists.
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 TEMPLATE="$ROOT/infra/bootstrap-deploy-role.yaml"
@@ -44,9 +24,7 @@ step() { printf '\n\033[1m▶ %s\033[0m\n' "$*"; }
 die()  { printf '\033[31m❌ %s\033[0m\n' "$*" >&2; exit 1; }
 
 # ── 0. Clear the placeholder AWS env vars this shell ships with ───────────────────────────────
-# AWS_PROFILE=local-env and AWS_ACCESS_KEY_ID=xxx point at a non-existent endpoint and take
-# precedence over ~/.aws/credentials. Only drop them if they are in fact the placeholders — if
-# you exported real credentials, they are kept and used.
+# Placeholders (local-env, xxx) override ~/.aws/credentials; real exported credentials stay.
 if [ "${AWS_ACCESS_KEY_ID:-}" = "xxx" ] || [ "${AWS_PROFILE:-}" = "local-env" ]; then
   unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_REGION AWS_DEFAULT_REGION \
         AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
@@ -113,14 +91,7 @@ esac
 ok "All preflight checks passed"
 
 # ── 3. OIDC provider ──────────────────────────────────────────────────────────────────────────
-# Only one provider per URL per account is allowed, so an unconditional create fails with
-# EntityAlreadyExists — hence the CreateOidcProvider condition.
-#
-# The check must distinguish a provider THIS STACK OWNS from a genuinely external one. Asking
-# only "does one exist?" is wrong on the second run: the provider found is the one the first
-# run created, answering No flips the condition false, and CloudFormation deletes it. The stack
-# still updates cleanly and every later deploy fails with "The web identity token provided
-# could not be validated" — a broken deploy caused by the fix-up script, not the deploy.
+# Keep Yes for a provider this stack owns, else CloudFormation deletes it and deploys fail.
 step "Checking for an existing GitHub OIDC provider"
 owned=$(aws_ cloudformation describe-stack-resource \
           --stack-name "$STACK" --logical-resource-id GitHubOidcProvider \
@@ -174,8 +145,7 @@ gh secret set AWS_ROLE_ARN       --repo "$GH_REPO" --env "$GH_ENV" --body "$role
 gh secret set STRIPE_SECRET_ARN  --repo "$GH_REPO" --env "$GH_ENV" --body "$param_arn"
 ok "AWS_ROLE_ARN, STRIPE_SECRET_ARN set"
 
-# ALLOWED_ORIGIN is no longer read by deploy.yml. A leftover one is inert rather than harmful,
-# but it is misleading to leave a secret lying around that looks like it still controls CORS.
+# deploy.yml does not read ALLOWED_ORIGIN; warn about any leftover secret so it cannot look like it controls CORS.
 if gh secret list --repo "$GH_REPO" --env "$GH_ENV" 2>/dev/null | grep -q '^ALLOWED_ORIGIN'; then
   printf '\033[33m⚠️  A stale ALLOWED_ORIGIN secret exists on the %s environment.\033[0m\n' "$GH_ENV"
   info "Nothing reads it — the origin allowlist now comes from the CloudFront distribution."
@@ -193,3 +163,8 @@ info "CloudFront and the site bucket's policy."
 info "The site's HTTPS URL is the stack's SiteUrl output — deploy.yml prints it at the end of"
 info "the run. The first deploy after adding CloudFront takes several extra minutes while the"
 info "distribution is created."
+printf '\n'
+info "For Forgejo deploys, create the deploy user's key:"
+info "  aws iam create-access-key --user-name shop-passion-forgejo-deploy"
+info "then set Forgejo Actions secrets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,"
+info "AWS_ROLE_ARN, STRIPE_SECRET_ARN and S3_BUCKET_NAME."
