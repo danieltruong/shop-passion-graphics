@@ -25,7 +25,7 @@ yarn generate:products # regenerate the catalog from the Stripe API
 
 ## Pre-push verifier
 
-Run in order before push; every one must pass (CI `ci.yml` runs same):
+Run in order before push; every one must pass (CI `.forgejo/workflows/ci.yml` runs same):
 
 ```bash
 yarn install --immutable && yarn lint && yarn test:run && VITE_CHECKOUT_API_URL= yarn build && yarn test:e2e
@@ -106,17 +106,16 @@ never around them.
 | `VITE_CHECKOUT_API_URL` | build time | Public URL. `deploy.yml` injects from SAM stack output; unset, CartDrawer uses `/api/create-checkout`. |
 
 Forgejo repo secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ROLE_ARN`, `STRIPE_SECRET_ARN`, `S3_BUCKET_NAME`
-required; `CUSTOM_DOMAIN_ORIGINS` optional. GitHub environments hold same set minus both keys until cutover. `.env.local` stays gitignored.
+required; `CUSTOM_DOMAIN_ORIGINS` optional. `.env.local` stays gitignored.
 Forgejo has no environments, so secrets reach every branch's workflows: any push to Forgejo can assume deploy role; who can push bounds access.
 
 ## Deploy
 
 Forgejo (`http://192.168.3.55:3000/daniel/shop-passion-graphics`) runs `.forgejo/workflows/`: push to `main` → CI
-(lint + test + build + e2e) must pass → `deploy.yml` runs SAM, builds frontend with stack's API URL, syncs to S3.
+(lint + test + build + e2e) must pass → `.forgejo/workflows/deploy.yml` runs SAM, builds frontend with stack's API URL, syncs to S3.
 
 - **AWS sign-in**: Forgejo issues no OIDC token AWS accepts; IAM user `shop-passion-forgejo-deploy` (key in Forgejo
-  secrets) assumes role `shop-passion-deploy`. `.github/workflows/` deploys via OIDC until cutover; edit both.
-- **Push order**: GitHub and Forgejo both deploy on push to `main`; push `main` to `github` remote only after Forgejo deploy finishes (concurrency per platform; two `sam deploy` runs collide).
+  secrets) assumes role `shop-passion-deploy`.
 - **CloudFront serves site, not bucket**; bucket is private (`SiteBucketPolicy`, Origin
   Access Control). Live URL is stack's `SiteUrl` output.
 - **`deploy.yml` does not deploy `infra/bootstrap-deploy-role.yaml`.** After changing it, run
@@ -128,22 +127,23 @@ Forgejo (`http://192.168.3.55:3000/daniel/shop-passion-graphics`) runs `.forgejo
 
 ## MCP tooling
 
-Gateway servers (`context7`, `forgejo`, `github`, `chrome-devtools`, `browser`, `shadcn`, `magic-ui`,
+Gateway servers (`context7`, `forgejo`, `chrome-devtools`, `browser`, `shadcn`, `magic-ui`,
 `jira-eao-dst`) from mcpjungle at `http://192.168.5.22:8080/mcp`, user scope, never
 committed. `stripe` project-scoped in `.mcp.json`. Register with `claude mcp add --scope user`:
 `projects["…"].mcpServers` not inherited below; `.claude/agents/*.md` edits need restart.
 
 - Library APIs (React, Vite, Framer Motion, Stripe SDK, Vitest, Playwright): `context7`, not recall or WebSearch.
 - Stripe products, prices, sessions, refunds: `stripe`, not curl `api.stripe.com` or throwaway node script.
-- PRs, issues, code search: `forgejo`, not `gh pr …`; `github` only for the GitHub copy until cutover.
+- PRs, issues, code search: `forgejo` (`mcp__mcpjungle__forgejo__*`), not `gh pr …`.
+- Merge PR: `forgejo` `merge_pull_request` returns HTTP 422 here; use `POST /api/v1/repos/daniel/shop-passion-graphics/pulls/<n>/merge` with body `{"Do":"merge"}`.
 - Lighthouse, performance checks on deployed site: `chrome-devtools`.
 - Screenshot/scrape public JS-heavy page: `browser`, not WebFetch.
-- CI run status: `forgejo` list_workflow_runs / get_workflow_run; logs: repo page `/actions` (no log tool); GitHub runs until cutover: `gh run list` / `gh run view --log-failed`.
-- **Never** write files through `forgejo` or `github` MCP (`push_files`, `create_or_update_file`): push to `main` deploys.
+- CI run status: `forgejo` `list_workflow_runs` / `get_workflow_run`; job logs: `GET /api/v1/repos/daniel/shop-passion-graphics/actions/jobs/<id>/logs` (no MCP log tool).
+- **Never** write files through `forgejo` MCP (`create_file`, `update_file`, `delete_file`): push to `main` deploys.
 - `browser` and `chrome-devtools` run on `192.168.5.22`, cannot reach this machine's `localhost`: use `webapp-testing`.
 - `shadcn`, `magic-ui` (no Tailwind here) and `jira-eao-dst` (other employer) never apply.
 - MCP grants in `.claude/agents/*.md` `tools:` and `.claude/settings.json` stay read-only, one
-  tool each: bare `mcp__mcpjungle` rule would also allow `merge_pull_request` and `push_files`.
+  tool each: bare `mcp__mcpjungle` rule would also allow `merge_pull_request` and `create_file`.
 - `stripe_api_read` takes operation ID (`GetPrices`), not URL; find with
   `stripe_api_search`. `scripts/generate-products.js` keeps calling REST API (no MCP in CI).
 

@@ -310,7 +310,7 @@ Outputs:
     Description: >
       Checkout API endpoint URL.
       Baked into the Vite bundle at build time as VITE_CHECKOUT_API_URL
-      by the GitHub Actions deploy workflow.
+      by the Forgejo Actions deploy workflow.
     Value: !Sub "https://${CheckoutApi}.execute-api.${AWS::Region}.amazonaws.com/create-checkout"
     Export:
       Name: !Sub "${AWS::StackName}-ApiUrl"

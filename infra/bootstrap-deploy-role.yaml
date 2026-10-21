@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Bootstrap for shop-passion-graphics CI deploys: GitHub OIDC provider, the
-  least-privilege role deploy.yml assumes, and the IAM user Forgejo Actions signs in as.
+  Bootstrap for shop-passion-graphics CI deploys: the least-privilege role deploy.yml
+  assumes, and the IAM user Forgejo Actions signs in as.
 
   deploy.yml does NOT deploy this. Deploy it by hand with credentials that can create IAM
   roles:
@@ -12,53 +12,21 @@ Description: >
       --capabilities CAPABILITY_NAMED_IAM \
       --region ca-central-1
 
-  Put the RoleArn output in the AWS_ROLE_ARN secret on GitHub and Forgejo.
+  Put the RoleArn output in the AWS_ROLE_ARN Forgejo secret.
 
-  GitHub Actions assumes the role through OIDC. Forgejo has no OIDC token AWS can verify, so
-  Forgejo Actions signs in as ForgejoDeployUser, which may only assume this role. Store its
-  key (aws iam create-access-key --user-name shop-passion-forgejo-deploy) as Forgejo secrets
+  Forgejo has no OIDC token AWS can verify, so Forgejo Actions signs in as
+  ForgejoDeployUser, which may only assume this role. Store its key
+  (aws iam create-access-key --user-name shop-passion-forgejo-deploy) as Forgejo secrets
   AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. Rotate the key by creating a new one, updating
   both Forgejo secrets, then deleting the old one.
 
 Parameters:
-  GitHubOwner:
-    Type: String
-    Default: danieltruong
-
-  GitHubRepo:
-    Type: String
-    Default: shop-passion-graphics
-
   SiteBucketName:
     Type: String
     Default: shop-passion-graphics-staging
     Description: The website bucket deploy.yml syncs dist/ into (the S3_BUCKET_NAME secret).
 
-  CreateOidcProvider:
-    Type: String
-    AllowedValues: ['Yes', 'No']
-    Default: 'Yes'
-    Description: >
-      Set to No if this account already has an IAM OIDC provider for
-      token.actions.githubusercontent.com — there can only be one per account, and a second
-      CreateOpenIDConnectProvider fails with EntityAlreadyExists.
-
-Conditions:
-  ShouldCreateOidcProvider: !Equals [!Ref CreateOidcProvider, 'Yes']
-
 Resources:
-
-  GitHubOidcProvider:
-    Type: AWS::IAM::OIDCProvider
-    Condition: ShouldCreateOidcProvider
-    Properties:
-      Url: https://token.actions.githubusercontent.com
-      ClientIdList:
-        - sts.amazonaws.com
-      # IAM ignores this thumbprint for GitHub (it validates against its own trusted root CAs);
-      # kept for older tooling.
-      ThumbprintList:
-        - 6938fd4d98bab03faadb97b34396831e3780aea1
 
   ForgejoDeployUser:
     Type: AWS::IAM::User
@@ -78,24 +46,11 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: shop-passion-deploy
-      Description: Assumed by GitHub Actions and Forgejo Actions (deploy.yml) to deploy the checkout API and site.
+      Description: Assumed by Forgejo Actions (deploy.yml) to deploy the checkout API and site.
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
-            Action: sts:AssumeRoleWithWebIdentity
-            Condition:
-              StringEquals:
-                'token.actions.githubusercontent.com:aud': sts.amazonaws.com
-              # Scoped to the two environments, not `repo:owner/repo:*`, which would let ANY
-              # workflow in the repo assume this role. deploy.yml sets `environment:`, so sub carries it.
-              StringLike:
-                'token.actions.githubusercontent.com:sub':
-                  - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:staging'
-                  - !Sub 'repo:${GitHubOwner}/${GitHubRepo}:environment:prod'
           - Effect: Allow
             Principal:
               AWS: !GetAtt ForgejoDeployUser.Arn
@@ -308,5 +263,5 @@ Resources:
 
 Outputs:
   RoleArn:
-    Description: Set this as the AWS_ROLE_ARN secret on GitHub and on Forgejo.
+    Description: Set this as the AWS_ROLE_ARN Forgejo secret.
     Value: !GetAtt DeployRole.Arn
