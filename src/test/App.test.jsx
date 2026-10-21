@@ -1,17 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useNavigate } from 'react-router'
 import App from '../App'
 import { badLink, frog, mockProductsFetch } from './fixtures'
 import { renderWithRouter } from './renderWithRouter'
 
-function renderApp(route = '/') {
-  return renderWithRouter(<App />, { route })
+function renderApp(route = '/', extra = null) {
+  return renderWithRouter(
+    <>
+      <App />
+      {extra}
+    </>,
+    { route },
+  )
 }
 
-async function renderLoaded(route = '/', list) {
+function NavProbe() {
+  const navigate = useNavigate()
+  return (
+    <>
+      <button onClick={() => navigate('/about')}>probe push</button>
+      <button onClick={() => navigate(-1)}>probe back</button>
+    </>
+  )
+}
+
+async function renderLoaded(route = '/', list, extra) {
   fetch.mockResolvedValueOnce(mockProductsFetch(list))
-  const view = renderApp(route)
+  const view = renderApp(route, extra)
   await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement())
   return view
 }
@@ -98,6 +115,24 @@ describe('App', () => {
       await renderLoaded()
       await user.tab()
       expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveFocus()
+    })
+  })
+
+  describe('scroll and focus on navigation', () => {
+    it('moves to the top and focuses main on a link, but not on back', async () => {
+      const user = userEvent.setup()
+      await renderLoaded('/', undefined, <NavProbe />)
+
+      await user.click(screen.getByRole('button', { name: 'probe push' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('About the shop')
+      expect(window.scrollTo).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('main')).toHaveFocus()
+
+      window.scrollTo.mockClear()
+      await user.click(screen.getByRole('button', { name: 'probe back' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('graphic design is my passion')
+      expect(window.scrollTo).not.toHaveBeenCalled()
+      expect(screen.getByRole('main')).not.toHaveFocus()
     })
   })
 

@@ -25,9 +25,9 @@ export function slugify(name) {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Explicit slug, else one from the name, else the product id. */
+/** Explicit slug, else one from the name, else the product id; always in slugify form. */
 export function slugFor(slug, name, id) {
-  return slugify(slug) || slugify(name) || id
+  return slugify(slug) || slugify(name) || slugify(id)
 }
 
 /** Non-empty string URLs, at most MAX_IMAGES of them. */

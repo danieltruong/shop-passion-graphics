@@ -138,8 +138,8 @@ tools: Read, Grep, Glob, Edit, Write, Bash, mcp__mcpjungle__context7__resolve-li
   `src/utils/formatPrice.js`.
 - **Animation**: CSS animations change `transform` and `opacity` only. Rainbow drift and
   marquee keyframes live in `src/theme.css`, `starfield-drift` in `src/components/Starfield.css`.
-  Framer Motion 14 used in `CartDrawer` and `Starfield` (`useScroll`, `useTransform`,
-  `useReducedMotion`).
+  Framer Motion 14 used in `CartDrawer`, `Starfield` (`useScroll`, `useTransform`,
+  `useReducedMotion`) and `ProductPage` (mobile buy bar).
 - **Reduced motion**: `<MotionConfig reducedMotion="user">` wraps the app. Do not add
   animations that bypass it.
 - **Testing**: Vitest + Testing Library. Any change to cart or price logic needs a test.

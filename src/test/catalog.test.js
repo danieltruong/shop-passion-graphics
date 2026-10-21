@@ -64,8 +64,13 @@ describe('slugFor', () => {
     expect(slugFor('', 'Sobble Cart', 'prod_1')).toBe('sobble-cart')
   })
 
-  it('falls back to the product id when name has no slug characters', () => {
-    expect(slugFor(undefined, '!!!', 'prod_1')).toBe('prod_1')
+  it('falls back to the product id, slugified, when name has no slug characters', () => {
+    expect(slugFor(undefined, '!!!', 'prod_1')).toBe('prod-1')
+  })
+
+  it('gives a non-Latin name a slug the product page can find', () => {
+    const products = [normalizeProduct({ ...frog, name: 'カエル', slug: undefined, productId: 'prod_UahrSUIPvwuJ6i' })]
+    expect(findBySlug(products, slugify(products[0].slug))).toBe(products[0])
   })
 })
 
