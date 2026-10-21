@@ -203,6 +203,11 @@
   letter-spacing: 1px;
 }
 
+/* Inline boxes ignore transforms; the count bumps when an item is added. */
+.spg-header__cart-count {
+  display: inline-block;
+}
+
 .spg-header__cart-badge {
   display: none;
 }

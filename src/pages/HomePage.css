@@ -154,7 +154,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  background: var(--color-tile);
+  background: var(--color-panel);
   border: 3px ridge var(--win-grey);
 }
 

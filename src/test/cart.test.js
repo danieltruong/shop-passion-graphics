@@ -5,6 +5,7 @@ import {
   subtotal,
   cartCurrency,
   totalItems,
+  itemsLabel,
   loadCart,
   saveCart,
   lineKey,
@@ -126,6 +127,16 @@ describe('subtotal / cartCurrency / totalItems', () => {
   it('sums quantities for the badge', () => {
     expect(totalItems([line(frog, 2), line(sobble, 3)])).toBe(5)
     expect(totalItems([])).toBe(0)
+  })
+})
+
+describe('itemsLabel', () => {
+  it.each([
+    [0, '0 items'],
+    [1, '1 item'],
+    [2, '2 items'],
+  ])('labels %i as "%s"', (count, label) => {
+    expect(itemsLabel(count)).toBe(label)
   })
 })
 

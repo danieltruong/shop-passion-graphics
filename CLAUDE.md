@@ -64,8 +64,10 @@ Yarn 4 everywhere, Lambda included: one root `yarn.lock`, no `package-lock.json`
   taken from Stripe product metadata and active Payment Links.
 - **Cart**: state owned by `src/App.jsx`, passed to `SiteHeader` and `CartDrawer`, kept
   in `localStorage` so Stripe cancel redirect does not wipe it. Lines keyed on `stripePriceId`.
-  `CART_ENABLED` in `src/features.js` is `false` in Phase 1: the drawer is unmounted and
-  product pages link to the Payment Link.
+  `CART_ENABLED` in `src/features.js` is `true`: `CartDrawer` mounted, opens from header cart
+  button or on rejected add, product pages add to cart. Checkout creates Stripe Checkout
+  Session through Lambda. Flag stays kill switch: `false` unmounts drawer, pages link to
+  Payment Link.
 - **Checkout**: `src/components/CartDrawer.jsx` POSTs `{cart: [{priceId, quantity}]}` and
   redirects to returned Stripe URL.
 - **Checkout function**: logic lives once in `lambda/create-checkout/checkout-core.mjs`.
@@ -89,10 +91,11 @@ Yarn 4 everywhere, Lambda included: one root `yarn.lock`, no `package-lock.json`
 
 ## Accessibility
 
-Cart drawer modal dialog: unmounted when closed (always-rendered
-`aria-modal="true"` panel announced on load), traps focus while open, restores focus to
-cart icon on close. Motion goes through `<MotionConfig reducedMotion="user">` or CSS gated on
-`@media (prefers-reduced-motion: reduce)`; never around them.
+Cart drawer modal dialog: unmounted when closed (always-rendered `aria-modal="true"` panel
+announced on load), traps focus while open, restores focus to control that opened it (cart
+button, or Add button after rejected add) on close. Motion goes through
+`<MotionConfig reducedMotion="user">` or CSS gated on `@media (prefers-reduced-motion: reduce)`;
+never around them.
 
 ## Environment
 

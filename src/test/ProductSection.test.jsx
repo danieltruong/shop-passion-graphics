@@ -60,7 +60,7 @@ describe('ProductSection', () => {
     renderWithRouter(<ProductSection products={mockProducts} onAddToCart={handleAddToCart} />)
     await user.click(screen.getByRole('button', { name: 'Add to cart: Frog' }))
     expect(handleAddToCart).toHaveBeenCalledTimes(1)
-    expect(handleAddToCart).toHaveBeenCalledWith(frog)
+    expect(handleAddToCart).toHaveBeenCalledWith(frog, expect.anything())
   })
 
   it('shows a Buy now link to the Payment Link when there is no cart', () => {

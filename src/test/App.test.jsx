@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useNavigate } from 'react-router'
 import App from '../App'
-import { badLink, frog, mockProductsFetch } from './fixtures'
+import { frog, mockProductsFetch } from './fixtures'
 import { renderWithRouter } from './renderWithRouter'
 
 function renderApp(route = '/', extra = null) {
@@ -86,13 +86,6 @@ describe('App', () => {
       renderApp()
       expect(await screen.findByRole('alert')).toBeInTheDocument()
     })
-
-    it('drops a non-Stripe Payment Link from the catalog', async () => {
-      vi.spyOn(console, 'warn').mockImplementation(() => {})
-      await renderLoaded('/', [badLink])
-      expect(screen.queryByRole('link', { name: /Buy now/ })).not.toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Coming soon: Bad Link' })).toBeDisabled()
-    })
   })
 
   describe('routes', () => {
@@ -133,20 +126,6 @@ describe('App', () => {
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('graphic design is my passion')
       expect(window.scrollTo).not.toHaveBeenCalled()
       expect(screen.getByRole('main')).not.toHaveFocus()
-    })
-  })
-
-  describe('with the cart disabled', () => {
-    it('shows no cart button, add-to-cart buttons or drawer', async () => {
-      await renderLoaded()
-      expect(screen.queryByRole('button', { name: /^Cart/ })).not.toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /add to cart/i })).not.toBeInTheDocument()
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    })
-
-    it('sells through Payment Links instead', async () => {
-      await renderLoaded()
-      expect(screen.getByRole('link', { name: 'Buy now: Frog' })).toHaveAttribute('href', 'https://buy.stripe.com/test_frog')
     })
   })
 

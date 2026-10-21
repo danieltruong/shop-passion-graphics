@@ -71,7 +71,7 @@
   gap: 10px;
   padding: 22px;
   background: var(--color-panel);
-  border: var(--border-gold);
+  border: var(--border-outset-gold);
 }
 
 .content-steps .step-list__number {

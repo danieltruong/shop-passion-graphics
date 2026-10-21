@@ -11,12 +11,17 @@ import Starburst from '../components/Starburst'
 import { IconCheck, IconLock } from '../components/icons'
 import { placeholders, policies } from '../content/site'
 import usePageTitle from '../hooks/usePageTitle'
-import { findBySlug, relatedTo, slugify } from '../utils/catalog'
+import { buyMode, findBySlug, relatedTo, slugify } from '../utils/catalog'
 import { formatPrice } from '../utils/formatPrice'
 import NotFoundPage from './NotFoundPage'
 import './ProductPage.css'
 
-export default function ProductPage({ products = [], loading = false, loadError = null }) {
+export default function ProductPage({
+  products = [],
+  loading = false,
+  loadError = null,
+  onAddToCart,
+}) {
   const { slug } = useParams()
   const product = findBySlug(products, slugify(slug))
   usePageTitle(product?.name ?? (loadError ? 'Shop unavailable' : null))
@@ -54,7 +59,7 @@ export default function ProductPage({ products = [], loading = false, loadError 
     return <NotFoundPage />
   }
 
-  const soldOut = product.badge === 'sold_out'
+  const mode = buyMode(product, onAddToCart)
   const hasPrice = Number.isFinite(product.price)
   const related = relatedTo(products, product)
 
@@ -84,8 +89,8 @@ export default function ProductPage({ products = [], loading = false, loadError 
           {hasPrice && (
             <PriceSticker amount={product.price} currency={product.currency} rotate={-3} size="lg" />
           )}
-          {soldOut && <p className="product__stock product__stock--sold">Sold out</p>}
-          {!soldOut && product.paymentLink && (
+          {mode === 'sold-out' && <p className="product__stock product__stock--sold">Sold out</p>}
+          {(mode === 'cart' || mode === 'link') && (
             <p className="product__stock">
               <IconCheck />
               In stock, ships in {policies.dispatchTime}
@@ -93,7 +98,7 @@ export default function ProductPage({ products = [], loading = false, loadError 
           )}
           {product.description && <p className="product__description">{product.description}</p>}
           <div ref={watchCta} className="product__cta-wrap">
-            <BuyAction product={product} size="xl" className="product__cta" />
+            <BuyAction product={product} onAddToCart={onAddToCart} size="xl" className="product__cta" />
           </div>
           <p className="product__trust">
             <IconLock />
@@ -128,7 +133,7 @@ export default function ProductPage({ products = [], loading = false, loadError 
           <ul className="related__list">
             {related.map((item) => (
               <li key={item.productId}>
-                <ProductCard product={item} />
+                <ProductCard product={item} onAddToCart={onAddToCart} />
               </li>
             ))}
           </ul>
@@ -136,7 +141,7 @@ export default function ProductPage({ products = [], loading = false, loadError 
       )}
 
       <AnimatePresence>
-        {ctaPassed && (soldOut || product.paymentLink) && (
+        {ctaPassed && mode && (
           <motion.div
             className="product-bar"
             initial={reduceMotion ? false : { y: '100%', opacity: 0 }}
@@ -150,7 +155,7 @@ export default function ProductPage({ products = [], loading = false, loadError 
                 <span className="product-bar__price">{formatPrice(product.price, product.currency)}</span>
               )}
             </div>
-            <BuyAction product={product} size="lg" className="product__cta" />
+            <BuyAction product={product} onAddToCart={onAddToCart} size="lg" className="product__cta" />
           </motion.div>
         )}
       </AnimatePresence>

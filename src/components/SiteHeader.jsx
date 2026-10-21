@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { useAnimate, useReducedMotion } from 'framer-motion'
 import Button from './Button'
 import { IconCart, IconFrog, IconMenu, IconSearch } from './icons'
 import { SITE_NAME, marquee, marqueeShort } from '../content/site'
-import { totalItems } from '../utils/cart'
+import { itemsLabel, totalItems } from '../utils/cart'
 import './SiteHeader.css'
 
 const NAV = [
@@ -32,6 +33,7 @@ function StarLine({ items }) {
 export default function SiteHeader({
   cartEnabled = false,
   cart = [],
+  cartPulse = 0,
   onCartOpen,
   animationsPaused = false,
   onToggleAnimations,
@@ -88,6 +90,31 @@ export default function SiteHeader({
   }
 
   const itemCount = totalItems(cart)
+  const reduceMotion = useReducedMotion()
+  const [cartScope, animateCart] = useAnimate()
+
+  // Keyed to successful adds, not the total, so a restored cart does not bump on load. The ref
+  // keeps a reduced-motion toggle from replaying the last bump.
+  const seenPulseRef = useRef(cartPulse)
+  useEffect(() => {
+    if (cartPulse === seenPulseRef.current) return undefined
+    seenPulseRef.current = cartPulse
+    if (reduceMotion || !cartScope.current) return undefined
+    const counts = '.spg-header__cart-count, .spg-header__cart-badge'
+    // The scope ref is null once the header unmounts, and animateCart throws on a null scope.
+    let settle
+    let cancelled = false
+    const grow = animateCart(counts, { scale: 1.25 }, { duration: 0.1, ease: 'easeOut' })
+    grow.then(() => {
+      if (cancelled || !cartScope.current) return
+      settle = animateCart(counts, { scale: 1 }, { type: 'spring', stiffness: 500, damping: 15 })
+    })
+    return () => {
+      cancelled = true
+      grow.stop()
+      settle?.stop()
+    }
+  }, [cartPulse, reduceMotion, animateCart, cartScope])
 
   return (
     <header className="spg-header">
@@ -170,13 +197,14 @@ export default function SiteHeader({
 
         {cartEnabled && (
           <Button
+            ref={cartScope}
             className="spg-header__cart"
             onClick={onCartOpen}
-            aria-label={`Cart, ${itemCount} item${itemCount === 1 ? '' : 's'}`}
+            aria-label={`Cart, ${itemsLabel(itemCount)}`}
           >
             <IconCart />
             <span className="spg-header__cart-text" aria-hidden="true">
-              CART ({itemCount})
+              CART (<span className="spg-header__cart-count">{itemCount}</span>)
             </span>
             {itemCount > 0 && (
               <span className="spg-header__cart-badge" aria-hidden="true">

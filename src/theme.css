@@ -9,7 +9,6 @@
   /* Colours on the dark page */
   --color-bg: #0d0d1a;
   --color-panel: rgba(30, 30, 60, 0.92);
-  --color-tile: rgba(30, 30, 60, 0.85);
   --color-text: #ffffff;
   --color-text-2: #c9c9e6;
   --color-text-3: #d6d6ee;
@@ -27,12 +26,16 @@
   --win-pressed: #dcdcdc;
   --win-title: linear-gradient(90deg, #000080, #1084d0);
   --win-ink: #000000;
+  --win-ink-2: #333333;
+  --win-paper: #ffffff;
   --win-link: #000080;
+  --win-backdrop: rgba(0, 0, 0, 0.62);
 
   --bevel-raised-colors: #ffffff #404040 #404040 #ffffff;
   --bevel-raised-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #808080;
   --bevel-sunken-colors: #404040 #ffffff #ffffff #404040;
   --bevel-sunken-shadow: inset 1px 1px #808080;
+  --border-outset-gold: 4px outset var(--color-gold);
 
   /* Buttons, stickers, badges */
   --btn-primary-bg: linear-gradient(180deg, #ffff66 0%, #ffb11a 55%, #ff6a00 100%);
@@ -42,16 +45,6 @@
   /* Logo and page H1 only */
   --rainbow: linear-gradient(90deg, #ff5c5c, #ff9a1f, #ffd700, #39ff14, #00bfff, #b98cff, #ff69b4, #ff5c5c);
   --marquee-duration: 18s;
-
-  /* Old names still read by App.css and components; drop each once nothing uses it. */
-  --font-heading: var(--font-display);
-  --rainbow-yellow: #ffd700;
-  --accent-orange: #ff4500;
-  --text-primary: var(--color-text);
-  --text-secondary: var(--color-text-2);
-  --card-bg: var(--color-tile);
-  --border-bevel: 4px ridge #c0c0c0;
-  --border-gold: 4px outset #ffd700;
 
   /* Disabled controls — #000 on #888 failed AA at this font size. */
   --disabled-bg: #4a4a5a;
@@ -154,7 +147,7 @@ summary:focus-visible,
   padding: var(--space-xs) var(--space-sm);
   background: var(--color-bg);
   color: var(--color-text);
-  border: var(--border-gold);
+  border: var(--border-outset-gold);
   font-family: var(--font-body);
   text-decoration: none;
   transition: transform 0.15s ease;

@@ -91,6 +91,38 @@ export function IconCheck({ size = 16, ...props }) {
   )
 }
 
+export function IconClose({ size = 18, ...props }) {
+  return (
+    <Svg size={size} {...stroke(3)} {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  )
+}
+
+export function IconPlus({ size = 16, ...props }) {
+  return (
+    <Svg size={size} {...stroke(3)} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
+  )
+}
+
+export function IconMinus({ size = 16, ...props }) {
+  return (
+    <Svg size={size} {...stroke(3)} {...props}>
+      <path d="M5 12h14" />
+    </Svg>
+  )
+}
+
+export function IconTrash({ size = 16, ...props }) {
+  return (
+    <Svg size={size} {...stroke(2)} {...props}>
+      <path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7" />
+    </Svg>
+  )
+}
+
 export function IconMenu({ size = 22, ...props }) {
   return (
     <Svg size={size} {...stroke(2.6)} {...props}>

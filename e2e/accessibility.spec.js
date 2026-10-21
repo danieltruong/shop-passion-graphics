@@ -33,7 +33,7 @@ cartDescribe('cart drawer (Phase 2)', () => {
     await gotoReady(page, '/')
     await page.getByRole('button', { name: /^cart,/i }).click()
 
-    const dialog = page.getByRole('dialog', { name: 'Shopping cart' })
+    const dialog = page.getByRole('dialog', { name: /your cart/i })
     await expect(dialog).toBeVisible()
     await expect(dialog).toBeFocused()
   })
@@ -41,6 +41,7 @@ cartDescribe('cart drawer (Phase 2)', () => {
   test('Tab is trapped inside the open dialog', async ({ page }) => {
     await gotoReady(page, '/')
     await page.getByRole('button', { name: /add to cart/i }).first().click()
+    await page.getByRole('button', { name: 'Cart, 1 item' }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
 
     for (let i = 0; i < 25; i++) {
@@ -51,6 +52,65 @@ cartDescribe('cart drawer (Phase 2)', () => {
       })
       expect(inside, `focus escaped the dialog on Tab #${i + 1}`).toBe(true)
     }
+  })
+
+  test.describe('focus stays in the dialog when lines go', () => {
+    // Chromium puts a space before the visually hidden ": Frog"; jsdom does not.
+    const addButton = (page, name) => page.getByRole('button', { name: new RegExp(`^Add to cart ?: ${name}$`) })
+
+    async function openCartWith(page, names, label) {
+      await gotoReady(page, '/')
+      for (const name of names) await addButton(page, name).click()
+      await page.getByRole('button', { name: label }).click()
+      return page.getByRole('dialog', { name: /your cart/i })
+    }
+
+    test('Remove moves focus to the next line', async ({ page }) => {
+      const dialog = await openCartWith(page, ['Frog', 'Moth Pin'], 'Cart, 2 items')
+      await dialog.getByRole('button', { name: 'Remove Frog from cart' }).press('Enter')
+      await expect(dialog.getByRole('button', { name: 'Decrease quantity of Moth Pin' })).toBeFocused()
+    })
+
+    test('Remove moves focus to the previous line when the last line goes', async ({ page }) => {
+      const dialog = await openCartWith(page, ['Frog', 'Moth Pin'], 'Cart, 2 items')
+      await dialog.getByRole('button', { name: 'Remove Moth Pin from cart' }).press('Enter')
+      await expect(dialog.getByRole('button', { name: 'Decrease quantity of Frog' })).toBeFocused()
+    })
+
+    test('Remove on the only line focuses the dialog', async ({ page }) => {
+      const dialog = await openCartWith(page, ['Frog'], 'Cart, 1 item')
+      await dialog.getByRole('button', { name: 'Remove Frog from cart' }).press('Enter')
+      await expect(dialog.getByText('Your cart is empty')).toBeVisible()
+      await expect(dialog).toBeFocused()
+    })
+
+    test('Decrease at quantity 1 keeps its name, removes the line and focuses the dialog', async ({ page }) => {
+      const dialog = await openCartWith(page, ['Frog'], 'Cart, 1 item')
+      await dialog.getByRole('button', { name: 'Decrease quantity of Frog' }).press('Enter')
+      await expect(dialog.getByText('Your cart is empty')).toBeVisible()
+      await expect(dialog).toBeFocused()
+    })
+
+    test('Clear cart focuses the dialog', async ({ page }) => {
+      const dialog = await openCartWith(page, ['Frog', 'Moth Pin'], 'Cart, 2 items')
+      await dialog.getByRole('button', { name: 'Clear cart' }).press('Enter')
+      await expect(dialog.getByText('Your cart is empty')).toBeVisible()
+      await expect(dialog).toBeFocused()
+    })
+
+    test('a refused add opens the drawer and Escape returns focus to that Add button', async ({ page }) => {
+      await page.addInitScript(() =>
+        localStorage.setItem('spg.cart.v1', JSON.stringify([{ key: 'price_e2e_frog', quantity: 99 }])),
+      )
+      await gotoReady(page, '/')
+      const add = addButton(page, 'Frog')
+      await add.click()
+      await expect(page.getByRole('dialog', { name: /your cart/i }).getByRole('alert')).toHaveText('Maximum 99 per item.')
+
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+      await expect(add).toBeFocused()
+    })
   })
 
   test('Escape closes the drawer and returns focus to the cart button', async ({ page }) => {

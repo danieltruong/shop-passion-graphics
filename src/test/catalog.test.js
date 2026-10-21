@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   MAX_IMAGES,
+  buyMode,
   categoriesOf,
   filterProducts,
   findBySlug,
@@ -16,6 +17,20 @@ import {
 import { badLink, euroThing, frog, soldOut, sobble, unpriced } from './fixtures'
 
 const names = (list) => list.map((p) => p.name)
+const addToCart = () => {}
+
+describe('buyMode', () => {
+  it.each([
+    ['sold out, even with a cart and a price', soldOut, addToCart, 'sold-out'],
+    ['sold out without a cart', soldOut, undefined, 'sold-out'],
+    ['cart when a cart is wired and the product has a price', frog, addToCart, 'cart'],
+    ['link when there is no cart and a Payment Link', frog, undefined, 'link'],
+    ['nothing with a cart but no price, even with a Payment Link', { ...frog, stripePriceId: null }, addToCart, null],
+    ['nothing with neither a cart nor a Payment Link', unpriced, undefined, null],
+  ])('%s', (_, product, onAddToCart, mode) => {
+    expect(buyMode(product, onAddToCart)).toBe(mode)
+  })
+})
 
 describe('isStripePaymentLink', () => {
   it('accepts an https link on buy.stripe.com', () => {
